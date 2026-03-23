@@ -49,3 +49,7 @@ export async function onFileChanged(
     callback(event.payload);
   });
 }
+
+export async function resolveWikilink(root: string, name: string): Promise<string | null> {
+  return invoke<string | null>("resolve_wikilink", { root, name });
+}

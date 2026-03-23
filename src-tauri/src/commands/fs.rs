@@ -18,3 +18,9 @@ pub fn write_file(path: String, content: String) -> Result<(), CommandError> {
 pub fn list_directory(path: String) -> Result<Vec<FileEntry>, CommandError> {
     Ok(fs_ops::list_directory(std::path::Path::new(&path))?)
 }
+
+#[tauri::command]
+pub fn resolve_wikilink(root: String, name: String) -> Option<String> {
+    fs_ops::find_file_by_name(std::path::Path::new(&root), &name)
+        .map(|p| p.display().to_string())
+}
