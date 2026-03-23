@@ -2,6 +2,7 @@ import { createSignal, createRoot } from "solid-js";
 import type { FileEntry, AppConfig } from "./ipc";
 
 export type EditorMode = "source" | "wysiwyg" | "split" | "preview";
+export type NavMode = "sidebar" | "miller" | "breadcrumb";
 
 function createAppState() {
   const [currentFolder, setCurrentFolder] = createSignal<string | null>(null);
@@ -13,6 +14,7 @@ function createAppState() {
   const [renderedHtml, setRenderedHtml] = createSignal<string>("");
   const [appConfig, setAppConfig] = createSignal<AppConfig | null>(null);
   const [showSettings, setShowSettings] = createSignal(false);
+  const [navMode, setNavMode] = createSignal<NavMode>("sidebar");
 
   return {
     currentFolder,
@@ -33,6 +35,8 @@ function createAppState() {
     setAppConfig,
     showSettings,
     setShowSettings,
+    navMode,
+    setNavMode,
   };
 }
 
