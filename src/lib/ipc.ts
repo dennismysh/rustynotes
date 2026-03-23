@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open, save } from "@tauri-apps/plugin-dialog";
 
 export interface FileEntry {
   name: string;
@@ -68,4 +68,21 @@ export async function getConfig(): Promise<AppConfig> {
 
 export async function saveConfig(config: AppConfig): Promise<void> {
   return invoke<void>("save_config_cmd", { configData: config });
+}
+
+export async function exportFile(
+  markdown: string,
+  outputPath: string,
+  format: string,
+  includeTheme: boolean,
+): Promise<void> {
+  return invoke<void>("export_file", { markdown, outputPath, format, includeTheme });
+}
+
+export async function showSaveDialog(defaultName: string, extension: string): Promise<string | null> {
+  const path = await save({
+    defaultPath: defaultName,
+    filters: [{ name: extension.toUpperCase(), extensions: [extension] }],
+  });
+  return path as string | null;
 }

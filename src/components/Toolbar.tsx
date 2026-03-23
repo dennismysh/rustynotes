@@ -1,9 +1,9 @@
 import { Component } from "solid-js";
 import { appState, type EditorMode, type NavMode } from "../lib/state";
-import { openFolderDialog, listDirectory, watchFolder } from "../lib/ipc";
+import { openFolderDialog, listDirectory, watchFolder, exportFile, showSaveDialog } from "../lib/ipc";
 
 const Toolbar: Component = () => {
-  const { editorMode, setEditorMode, setCurrentFolder, setFileTree, setShowSettings, navMode, setNavMode } = appState;
+  const { editorMode, setEditorMode, setCurrentFolder, setFileTree, setShowSettings, navMode, setNavMode, activeFileContent, activeFilePath } = appState;
 
   const handleOpenFolder = async () => {
     const folder = await openFolderDialog();
@@ -21,6 +21,20 @@ const Toolbar: Component = () => {
 
   const setNav = (mode: NavMode) => {
     setNavMode(mode);
+  };
+
+  const handleExport = async () => {
+    const content = activeFileContent();
+    const filePath = activeFilePath();
+    if (!filePath) return;
+
+    const fileName = filePath.split("/").pop()?.replace(/\.[^.]+$/, "") ?? "document";
+    const defaultName = `${fileName}.html`;
+
+    const savePath = await showSaveDialog(defaultName, "html");
+    if (savePath) {
+      await exportFile(content, savePath, "html", true);
+    }
   };
 
   return (
@@ -73,6 +87,9 @@ const Toolbar: Component = () => {
           Preview
         </button>
       </div>
+      <button class="export-btn" onClick={handleExport} title="Export to HTML">
+        Export
+      </button>
       <button class="settings-btn" onClick={() => setShowSettings(true)} title="Settings">
         &#9881;
       </button>
