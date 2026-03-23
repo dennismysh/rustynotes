@@ -53,3 +53,19 @@ export async function onFileChanged(
 export async function resolveWikilink(root: string, name: string): Promise<string | null> {
   return invoke<string | null>("resolve_wikilink", { root, name });
 }
+
+export interface AppConfig {
+  theme: { active: string; overrides: { colors: Record<string, string>; typography: Record<string, string>; spacing: Record<string, string> } };
+  editor_mode: string;
+  nav_mode: string;
+  rendering: { render_math: boolean; render_diagrams: boolean; render_frontmatter: boolean; show_line_numbers: boolean; render_wikilinks: boolean };
+  recent_folders: string[];
+}
+
+export async function getConfig(): Promise<AppConfig> {
+  return invoke<AppConfig>("get_config");
+}
+
+export async function saveConfig(config: AppConfig): Promise<void> {
+  return invoke<void>("save_config_cmd", { configData: config });
+}
