@@ -1,4 +1,5 @@
 mod commands;
+mod config;
 mod fs_ops;
 mod markdown_parser;
 mod watcher;
