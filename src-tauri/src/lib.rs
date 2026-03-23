@@ -1,5 +1,6 @@
 mod commands;
 mod config;
+mod export;
 mod fs_ops;
 mod markdown_parser;
 mod watcher;
