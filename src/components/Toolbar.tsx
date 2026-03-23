@@ -31,6 +31,18 @@ const Toolbar: Component = () => {
           Source
         </button>
         <button
+          classList={{ active: editorMode() === "wysiwyg" }}
+          onClick={() => setMode("wysiwyg")}
+        >
+          WYSIWYG
+        </button>
+        <button
+          classList={{ active: editorMode() === "split" }}
+          onClick={() => setMode("split")}
+        >
+          Split
+        </button>
+        <button
           classList={{ active: editorMode() === "preview" }}
           onClick={() => setMode("preview")}
         >

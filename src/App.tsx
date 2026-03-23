@@ -2,6 +2,8 @@ import { Component, Show } from "solid-js";
 import Toolbar from "./components/Toolbar";
 import Sidebar from "./components/navigation/Sidebar";
 import SourceEditor from "./components/editor/SourceEditor";
+import WysiwygEditor from "./components/editor/WysiwygEditor";
+import SplitPane from "./components/editor/SplitPane";
 import Preview from "./components/preview/Preview";
 import { appState } from "./lib/state";
 import "./styles/base.css";
@@ -25,6 +27,12 @@ const App: Component = () => {
         >
           <Show when={editorMode() === "source"}>
             <SourceEditor />
+          </Show>
+          <Show when={editorMode() === "wysiwyg"}>
+            <WysiwygEditor />
+          </Show>
+          <Show when={editorMode() === "split"}>
+            <SplitPane />
           </Show>
           <Show when={editorMode() === "preview"}>
             <Preview />
