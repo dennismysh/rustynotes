@@ -1,5 +1,6 @@
 mod commands;
 mod config;
+mod export;
 mod fs_ops;
 mod markdown_parser;
 mod watcher;
@@ -41,6 +42,7 @@ pub fn run() {
             commands::markdown::parse_markdown,
             commands::config::get_config,
             commands::config::save_config_cmd,
+            commands::export::export_file,
             watch_folder,
         ])
         .run(tauri::generate_context!())
