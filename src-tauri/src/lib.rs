@@ -33,6 +33,7 @@ pub fn run() {
             commands::fs::read_file,
             commands::fs::write_file,
             commands::fs::list_directory,
+            commands::fs::resolve_wikilink,
             commands::markdown::parse_markdown,
             watch_folder,
         ])

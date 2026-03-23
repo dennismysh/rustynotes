@@ -72,6 +72,29 @@ pub fn list_directory(path: &Path) -> Result<Vec<FileEntry>, FsError> {
     Ok(entries)
 }
 
+/// Find a markdown file by name (without .md extension) in a directory tree.
+pub fn find_file_by_name(root: &Path, name: &str) -> Option<PathBuf> {
+    let target = if name.ends_with(".md") {
+        name.to_string()
+    } else {
+        format!("{}.md", name)
+    };
+
+    for entry in walkdir::WalkDir::new(root)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
+        if entry.file_type().is_file() {
+            if let Some(file_name) = entry.path().file_name() {
+                if file_name.to_string_lossy().eq_ignore_ascii_case(&target) {
+                    return Some(entry.path().to_path_buf());
+                }
+            }
+        }
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -150,5 +173,27 @@ mod tests {
         let children = subfolder.children.as_ref().unwrap();
         assert_eq!(children.len(), 1);
         assert_eq!(children[0].name, "nested.md");
+    }
+
+    #[test]
+    fn test_find_file_by_name() {
+        let dir = setup_test_dir();
+        let result = find_file_by_name(dir.path(), "hello");
+        assert!(result.is_some());
+        assert!(result.unwrap().ends_with("hello.md"));
+    }
+
+    #[test]
+    fn test_find_file_by_name_nested() {
+        let dir = setup_test_dir();
+        let result = find_file_by_name(dir.path(), "nested");
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn test_find_file_by_name_not_found() {
+        let dir = setup_test_dir();
+        let result = find_file_by_name(dir.path(), "nonexistent");
+        assert!(result.is_none());
     }
 }

@@ -1,12 +1,20 @@
-import { Component } from "solid-js";
+import { Component, createEffect } from "solid-js";
 import { appState } from "../../lib/state";
+import { postProcessPreview } from "../../lib/postprocess";
 
 const Preview: Component = () => {
+  let containerRef: HTMLDivElement | undefined;
   const { renderedHtml } = appState;
 
-  return (
-    <div class="preview-container" innerHTML={renderedHtml()} />
-  );
+  createEffect(async () => {
+    const html = renderedHtml();
+    if (containerRef) {
+      containerRef.innerHTML = html;
+      await postProcessPreview(containerRef);
+    }
+  });
+
+  return <div ref={containerRef} class="preview-container" />;
 };
 
 export default Preview;
