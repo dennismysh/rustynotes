@@ -1,9 +1,9 @@
 import { Component } from "solid-js";
-import { appState, type EditorMode } from "../lib/state";
+import { appState, type EditorMode, type NavMode } from "../lib/state";
 import { openFolderDialog, listDirectory, watchFolder } from "../lib/ipc";
 
 const Toolbar: Component = () => {
-  const { editorMode, setEditorMode, setCurrentFolder, setFileTree, setShowSettings } = appState;
+  const { editorMode, setEditorMode, setCurrentFolder, setFileTree, setShowSettings, navMode, setNavMode } = appState;
 
   const handleOpenFolder = async () => {
     const folder = await openFolderDialog();
@@ -19,9 +19,33 @@ const Toolbar: Component = () => {
     setEditorMode(mode);
   };
 
+  const setNav = (mode: NavMode) => {
+    setNavMode(mode);
+  };
+
   return (
     <div class="toolbar">
       <button onClick={handleOpenFolder}>Open Folder</button>
+      <div class="nav-switcher">
+        <button
+          classList={{ active: navMode() === "sidebar" }}
+          onClick={() => setNav("sidebar")}
+        >
+          Tree
+        </button>
+        <button
+          classList={{ active: navMode() === "miller" }}
+          onClick={() => setNav("miller")}
+        >
+          Columns
+        </button>
+        <button
+          classList={{ active: navMode() === "breadcrumb" }}
+          onClick={() => setNav("breadcrumb")}
+        >
+          Crumbs
+        </button>
+      </div>
       <div class="spacer" />
       <div class="mode-switcher">
         <button

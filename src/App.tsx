@@ -1,6 +1,8 @@
 import { Component, Show, onMount, onCleanup } from "solid-js";
 import Toolbar from "./components/Toolbar";
 import Sidebar from "./components/navigation/Sidebar";
+import MillerColumns from "./components/navigation/MillerColumns";
+import Breadcrumb from "./components/navigation/Breadcrumb";
 import SourceEditor from "./components/editor/SourceEditor";
 import WysiwygEditor from "./components/editor/WysiwygEditor";
 import SplitPane from "./components/editor/SplitPane";
@@ -14,7 +16,7 @@ import "./styles/base.css";
 const modes: EditorMode[] = ["source", "wysiwyg", "split", "preview"];
 
 const App: Component = () => {
-  const { activeFilePath, editorMode, setEditorMode, setAppConfig } = appState;
+  const { activeFilePath, editorMode, setEditorMode, setAppConfig, navMode, setNavMode } = appState;
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "e") {
@@ -26,6 +28,18 @@ const App: Component = () => {
     if ((e.metaKey || e.ctrlKey) && e.key === "p") {
       e.preventDefault();
       setEditorMode("preview");
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === "1") {
+      e.preventDefault();
+      setNavMode("sidebar");
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === "2") {
+      e.preventDefault();
+      setNavMode("miller");
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === "3") {
+      e.preventDefault();
+      setNavMode("breadcrumb");
     }
   };
 
@@ -62,9 +76,24 @@ const App: Component = () => {
   onCleanup(() => document.removeEventListener("keydown", handleKeyDown));
 
   return (
-    <div class="app-shell">
+    <div
+      class="app-shell"
+      classList={{
+        "nav-sidebar": navMode() === "sidebar",
+        "nav-miller": navMode() === "miller",
+        "nav-breadcrumb": navMode() === "breadcrumb",
+      }}
+    >
       <Toolbar />
-      <Sidebar />
+      <Show when={navMode() === "sidebar"}>
+        <Sidebar />
+      </Show>
+      <Show when={navMode() === "miller"}>
+        <MillerColumns />
+      </Show>
+      <Show when={navMode() === "breadcrumb"}>
+        <Breadcrumb />
+      </Show>
       <div class="content-area">
         <Show
           when={activeFilePath()}
