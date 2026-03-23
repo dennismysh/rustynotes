@@ -5,6 +5,7 @@ import SourceEditor from "./components/editor/SourceEditor";
 import WysiwygEditor from "./components/editor/WysiwygEditor";
 import SplitPane from "./components/editor/SplitPane";
 import Preview from "./components/preview/Preview";
+import SettingsPanel from "./components/settings/SettingsPanel";
 import { appState, type EditorMode } from "./lib/state";
 import "./styles/base.css";
 
@@ -57,6 +58,7 @@ const App: Component = () => {
           </Show>
         </Show>
       </div>
+      <SettingsPanel />
     </div>
   );
 };
