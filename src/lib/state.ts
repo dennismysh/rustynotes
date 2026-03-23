@@ -1,5 +1,5 @@
 import { createSignal, createRoot } from "solid-js";
-import type { FileEntry } from "./ipc";
+import type { FileEntry, AppConfig } from "./ipc";
 
 export type EditorMode = "source" | "wysiwyg" | "split" | "preview";
 
@@ -11,6 +11,8 @@ function createAppState() {
   const [editorMode, setEditorMode] = createSignal<EditorMode>("source");
   const [isDirty, setIsDirty] = createSignal(false);
   const [renderedHtml, setRenderedHtml] = createSignal<string>("");
+  const [appConfig, setAppConfig] = createSignal<AppConfig | null>(null);
+  const [showSettings, setShowSettings] = createSignal(false);
 
   return {
     currentFolder,
@@ -27,6 +29,10 @@ function createAppState() {
     setIsDirty,
     renderedHtml,
     setRenderedHtml,
+    appConfig,
+    setAppConfig,
+    showSettings,
+    setShowSettings,
   };
 }
 

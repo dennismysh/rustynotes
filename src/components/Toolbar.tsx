@@ -1,9 +1,9 @@
 import { Component } from "solid-js";
-import { appState, EditorMode } from "../lib/state";
+import { appState, type EditorMode } from "../lib/state";
 import { openFolderDialog, listDirectory, watchFolder } from "../lib/ipc";
 
 const Toolbar: Component = () => {
-  const { editorMode, setEditorMode, setCurrentFolder, setFileTree } = appState;
+  const { editorMode, setEditorMode, setCurrentFolder, setFileTree, setShowSettings } = appState;
 
   const handleOpenFolder = async () => {
     const folder = await openFolderDialog();
@@ -49,6 +49,9 @@ const Toolbar: Component = () => {
           Preview
         </button>
       </div>
+      <button class="settings-btn" onClick={() => setShowSettings(true)} title="Settings">
+        &#9881;
+      </button>
     </div>
   );
 };

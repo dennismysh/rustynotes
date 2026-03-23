@@ -1,4 +1,5 @@
 mod commands;
+mod config;
 mod fs_ops;
 mod markdown_parser;
 mod watcher;
@@ -29,12 +30,17 @@ pub fn run() {
         .manage(WatcherState {
             _watcher: Mutex::new(None),
         })
+        .manage(commands::config::ConfigState {
+            config: Mutex::new(config::load_config()),
+        })
         .invoke_handler(tauri::generate_handler![
             commands::fs::read_file,
             commands::fs::write_file,
             commands::fs::list_directory,
             commands::fs::resolve_wikilink,
             commands::markdown::parse_markdown,
+            commands::config::get_config,
+            commands::config::save_config_cmd,
             watch_folder,
         ])
         .run(tauri::generate_context!())
