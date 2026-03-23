@@ -1,6 +1,6 @@
 import { Component } from "solid-js";
 import { appState, EditorMode } from "../lib/state";
-import { openFolderDialog, listDirectory } from "../lib/ipc";
+import { openFolderDialog, listDirectory, watchFolder } from "../lib/ipc";
 
 const Toolbar: Component = () => {
   const { editorMode, setEditorMode, setCurrentFolder, setFileTree } = appState;
@@ -11,6 +11,7 @@ const Toolbar: Component = () => {
       setCurrentFolder(folder);
       const tree = await listDirectory(folder);
       setFileTree(tree);
+      await watchFolder(folder);
     }
   };
 

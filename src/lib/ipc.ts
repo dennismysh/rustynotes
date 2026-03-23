@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 
 export interface FileEntry {
@@ -30,4 +31,21 @@ export async function parseMarkdown(content: string): Promise<string> {
 export async function openFolderDialog(): Promise<string | null> {
   const selected = await open({ directory: true, multiple: false });
   return selected as string | null;
+}
+
+export interface FileChangeEvent {
+  paths: string[];
+  kind: string;
+}
+
+export async function watchFolder(path: string): Promise<void> {
+  return invoke<void>("watch_folder", { path });
+}
+
+export async function onFileChanged(
+  callback: (event: FileChangeEvent) => void
+): Promise<() => void> {
+  return listen<FileChangeEvent>("file-changed", (event) => {
+    callback(event.payload);
+  });
 }
