@@ -265,3 +265,64 @@ html, body, #root {
 .split-pane-right {
   overflow-y: auto;
 }
+
+/* Admonitions / GitHub-style alerts */
+.preview-container .markdown-alert {
+  padding: 12px 16px;
+  margin: 1em 0;
+  border-left: 4px solid;
+  border-radius: 4px;
+  background: var(--bg-secondary);
+}
+
+.preview-container .markdown-alert-note { border-left-color: var(--accent); }
+.preview-container .markdown-alert-tip { border-left-color: #2da44e; }
+.preview-container .markdown-alert-important { border-left-color: #8957e5; }
+.preview-container .markdown-alert-warning { border-left-color: #d29922; }
+.preview-container .markdown-alert-caution { border-left-color: #e74c3c; }
+
+.preview-container .markdown-alert .markdown-alert-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  text-transform: capitalize;
+}
+
+/* Math rendering */
+.math-rendered { display: inline; }
+.math-block { display: block; text-align: center; margin: 1em 0; overflow-x: auto; }
+
+/* Mermaid diagrams */
+.mermaid-diagram { display: flex; justify-content: center; margin: 1em 0; overflow-x: auto; }
+.mermaid-diagram svg { max-width: 100%; height: auto; }
+
+/* Shiki code blocks */
+.shiki-wrapper pre {
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 1em 0;
+  border: 1px solid var(--border);
+}
+.shiki-wrapper code { background: none; padding: 0; font-family: var(--font-mono); font-size: 0.9em; }
+
+/* Wiki-links */
+.preview-container a.wikilink {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--accent);
+}
+.preview-container a.wikilink:hover { border-bottom-style: solid; }
+
+/* Footnotes */
+.preview-container .footnotes {
+  margin-top: 2em;
+  padding-top: 1em;
+  border-top: 1px solid var(--border);
+  font-size: 0.9em;
+}
+.preview-container .footnote-ref a,
+.preview-container .footnote-backref { color: var(--accent); text-decoration: none; }
+
+/* Definition lists */
+.preview-container dt { font-weight: 600; margin-top: 1em; }
+.preview-container dd { margin-left: 2em; margin-bottom: 0.5em; }
