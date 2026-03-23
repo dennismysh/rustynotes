@@ -7,12 +7,14 @@ import SplitPane from "./components/editor/SplitPane";
 import Preview from "./components/preview/Preview";
 import SettingsPanel from "./components/settings/SettingsPanel";
 import { appState, type EditorMode } from "./lib/state";
+import { getConfig } from "./lib/ipc";
+import { applyTheme, resolveTheme } from "./lib/theme";
 import "./styles/base.css";
 
 const modes: EditorMode[] = ["source", "wysiwyg", "split", "preview"];
 
 const App: Component = () => {
-  const { activeFilePath, editorMode, setEditorMode } = appState;
+  const { activeFilePath, editorMode, setEditorMode, setAppConfig } = appState;
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "e") {
@@ -27,7 +29,36 @@ const App: Component = () => {
     }
   };
 
-  onMount(() => document.addEventListener("keydown", handleKeyDown));
+  onMount(async () => {
+    document.addEventListener("keydown", handleKeyDown);
+
+    try {
+      const config = await getConfig();
+      setAppConfig(config);
+      applyTheme(resolveTheme(config.theme.active), config.theme.overrides);
+
+      // Set editor mode from config
+      const mode = config.editor_mode as EditorMode;
+      if (modes.includes(mode)) {
+        setEditorMode(mode);
+      }
+
+      // Listen for OS theme changes when active === "auto"
+      if (config.theme.active === "auto") {
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        const handler = () => {
+          const currentConfig = appState.appConfig();
+          if (currentConfig && currentConfig.theme.active === "auto") {
+            applyTheme(resolveTheme("auto"), currentConfig.theme.overrides);
+          }
+        };
+        mediaQuery.addEventListener("change", handler);
+      }
+    } catch (e) {
+      console.error("Failed to load config:", e);
+    }
+  });
+
   onCleanup(() => document.removeEventListener("keydown", handleKeyDown));
 
   return (
