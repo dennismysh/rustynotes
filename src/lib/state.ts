@@ -1,7 +1,7 @@
 import { createSignal, createRoot } from "solid-js";
 import type { FileEntry } from "./ipc";
 
-export type EditorMode = "source" | "preview";
+export type EditorMode = "source" | "wysiwyg" | "split" | "preview";
 
 function createAppState() {
   const [currentFolder, setCurrentFolder] = createSignal<string | null>(null);
