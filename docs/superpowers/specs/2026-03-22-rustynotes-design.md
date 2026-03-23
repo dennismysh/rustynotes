@@ -32,7 +32,7 @@ Tauri `#[tauri::command]` for typed Rust<->TS communication. The frontend never 
 
 ### Frontend Framework
 
-Solid.js (or Preact) — lightweight reactive layer with fine-grained reactivity, small bundle size.
+Solid.js — chosen for fine-grained reactivity (signals), small bundle size (~7KB), and familiar JSX syntax without a virtual DOM.
 
 ## Navigation & Layout
 
@@ -81,7 +81,7 @@ comrak (Rust) in the Tauri backend. Parses markdown to HTML which is sent to the
 | Wiki-links (`[[page]]`) | Custom comrak plugin or post-parse regex | Custom resolver — Rust resolves link targets, frontend renders as clickable links |
 | Admonitions (`> [!NOTE]`, etc.) | Post-parse transform in Rust | CSS styled callout boxes |
 | Definition lists | comrak built-in (with extension flag) | CSS styling |
-| Syntax highlighting | comrak outputs fenced code blocks | highlight.js or Shiki in frontend |
+| Syntax highlighting | comrak outputs fenced code blocks | Shiki (WASM-based, same TextMate grammars as VS Code, build-time compatible) |
 | Frontmatter (YAML) | Rust strips + parses to struct | Optionally rendered as metadata header, toggleable |
 
 ### Wiki-Links & Backlinks
@@ -90,7 +90,13 @@ Rust maintains an in-memory index of all `[[link]]` targets across the opened fo
 
 ### WYSIWYG Mapping
 
-TipTap extensions mirror each markdown extension — a TipTap node type for each comrak AST node. Source<->WYSIWYG conversion goes through the comrak AST as the single source of truth.
+TipTap extensions mirror each markdown extension — a TipTap node type for each comrak AST node.
+
+**Conversion flow:** Markdown is the source of truth, not the comrak AST or ProseMirror document.
+
+- **Markdown -> WYSIWYG:** When entering WYSIWYG mode, the raw markdown string is sent to the Rust backend which parses it via comrak and returns a JSON AST (comrak nodes serialized via serde). The frontend walks this JSON AST and builds the corresponding ProseMirror/TipTap document nodes.
+- **WYSIWYG -> Markdown:** When saving or switching to source mode, the frontend serializes the TipTap document back to markdown using TipTap's `tiptap-markdown` extension (or a custom serializer that walks the ProseMirror doc and emits markdown syntax). This produces a markdown string that gets written to disk.
+- **Round-trip integrity:** The markdown string is always what gets persisted. Switching modes does: `markdown -> (parse) -> editor model -> (serialize) -> markdown`. Any extension not representable in TipTap falls back to an opaque HTML block node that preserves the raw markdown source.
 
 ## Theming & Style Customization
 
@@ -225,5 +231,5 @@ rustynotes/
 - `@tiptap/core` + extensions — WYSIWYG editor
 - `katex` — math rendering
 - `mermaid` — diagram rendering
-- `highlight.js` or `shiki` — code syntax highlighting
+- `shiki` — code syntax highlighting (WASM-based, TextMate grammars)
 - `solid-js` — reactive UI framework
