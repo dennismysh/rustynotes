@@ -1,33 +1,49 @@
-import katex from "katex";
-import "katex/dist/katex.min.css";
-import mermaid from "mermaid";
-import { codeToHtml } from "shiki";
+// All heavy libraries are lazy-loaded — only imported when the preview
+// actually contains matching content (math, diagrams, code blocks).
 
+let katexLoaded: typeof import("katex") | null = null;
+let katexCssLoaded = false;
+let mermaidLoaded: typeof import("mermaid") | null = null;
 let mermaidInitialized = false;
 let mermaidIdCounter = 0;
 
-function initMermaid(isDark: boolean) {
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: isDark ? "dark" : "default",
-    securityLevel: "loose",
-  });
-  mermaidInitialized = true;
+async function getKatex() {
+  if (!katexLoaded) {
+    katexLoaded = await import("katex");
+    if (!katexCssLoaded) {
+      await import("katex/dist/katex.min.css");
+      katexCssLoaded = true;
+    }
+  }
+  return katexLoaded.default;
+}
+
+async function getMermaid() {
+  if (!mermaidLoaded) {
+    mermaidLoaded = await import("mermaid");
+  }
+  return mermaidLoaded.default;
 }
 
 export async function postProcessPreview(container: HTMLElement): Promise<void> {
   const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-  await Promise.all([
-    renderMath(container),
-    renderDiagrams(container, isDark),
-    highlightCode(container, isDark),
-  ]);
+  // Only load libraries if content needs them
+  const hasMath = container.querySelector('code.math-inline, code.math-display, [data-math-style]');
+  const hasMermaid = container.querySelector('code.language-mermaid');
+  const hasCode = container.querySelector("pre > code[class*='language-']");
+
+  const tasks: Promise<void>[] = [];
+  if (hasMath) tasks.push(renderMath(container));
+  if (hasMermaid) tasks.push(renderDiagrams(container, isDark));
+  if (hasCode) tasks.push(highlightCode(container, isDark));
+
+  if (tasks.length > 0) await Promise.all(tasks);
 }
 
-function renderMath(container: HTMLElement): void {
-  // comrak with math_dollars wraps inline math in <code class="math-inline">
-  // and block math in <code class="math-display">
+async function renderMath(container: HTMLElement): Promise<void> {
+  const katex = await getKatex();
+
   container.querySelectorAll('code.math-inline, [data-math-style="inline"]').forEach((el) => {
     try {
       const tex = el.textContent || "";
@@ -57,7 +73,16 @@ function renderMath(container: HTMLElement): void {
 }
 
 async function renderDiagrams(container: HTMLElement, isDark: boolean): Promise<void> {
-  if (!mermaidInitialized) initMermaid(isDark);
+  const mermaid = await getMermaid();
+
+  if (!mermaidInitialized) {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: isDark ? "dark" : "default",
+      securityLevel: "loose",
+    });
+    mermaidInitialized = true;
+  }
 
   const mermaidBlocks = container.querySelectorAll('code.language-mermaid');
   for (let i = 0; i < mermaidBlocks.length; i++) {
@@ -79,6 +104,8 @@ async function renderDiagrams(container: HTMLElement, isDark: boolean): Promise<
 }
 
 async function highlightCode(container: HTMLElement, isDark: boolean): Promise<void> {
+  const { codeToHtml } = await import("shiki");
+
   const codeBlocks = Array.from(
     container.querySelectorAll("pre > code[class*='language-']")
   );
