@@ -1,9 +1,13 @@
-import { Component, Show, createSignal } from "solid-js";
-import { appState, type EditorMode, type NavMode } from "../lib/state";
+import { Component, Show, createSignal, createMemo } from "solid-js";
+import { appState } from "../lib/state";
 import { openFolderDialog, listDirectory, watchFolder, exportFile, showSaveDialog } from "../lib/ipc";
 
 const Toolbar: Component = () => {
-  const { editorMode, setEditorMode, setCurrentFolder, setFileTree, setShowSettings, navMode, setNavMode, activeFileContent, activeFilePath, isDirty } = appState;
+  const {
+    setCurrentFolder, setFileTree, setShowSettings,
+    activeFileContent, activeFilePath, isDirty,
+    showSearch, setShowSearch,
+  } = appState;
   const [exportStatus, setExportStatus] = createSignal<string | null>(null);
 
   const handleOpenFolder = async () => {
@@ -14,14 +18,6 @@ const Toolbar: Component = () => {
       setFileTree(tree);
       await watchFolder(folder);
     }
-  };
-
-  const setMode = (mode: EditorMode) => {
-    setEditorMode(mode);
-  };
-
-  const setNav = (mode: NavMode) => {
-    setNavMode(mode);
   };
 
   const showStatus = (msg: string) => {
@@ -49,76 +45,42 @@ const Toolbar: Component = () => {
     }
   };
 
-  const isMac = navigator.platform.includes("Mac");
-  const mod = isMac ? "\u2318" : "Ctrl+";
+  const activeFileName = createMemo(() => {
+    const path = activeFilePath();
+    if (!path) return null;
+    return path.split("/").pop() ?? null;
+  });
 
   return (
     <div class="toolbar">
       <button onClick={handleOpenFolder}>Open Folder</button>
-      <div class="nav-switcher">
-        <button
-          classList={{ active: navMode() === "sidebar" }}
-          onClick={() => setNav("sidebar")}
-          title={`Tree view (${mod}1)`}
-        >
-          Tree
-        </button>
-        <button
-          classList={{ active: navMode() === "miller" }}
-          onClick={() => setNav("miller")}
-          title={`Column view (${mod}2)`}
-        >
-          Columns
-        </button>
-        <button
-          classList={{ active: navMode() === "breadcrumb" }}
-          onClick={() => setNav("breadcrumb")}
-          title={`Breadcrumb view (${mod}3)`}
-        >
-          Crumbs
-        </button>
-      </div>
+      <div class="spacer" />
+      <Show when={activeFileName()}>
+        <div class="toolbar-filename">
+          <Show when={isDirty()}>
+            <span class="dirty-indicator" aria-label="Unsaved changes" />
+          </Show>
+          <span class="toolbar-filename-text" title={activeFilePath()!}>
+            {activeFileName()}
+          </span>
+        </div>
+      </Show>
       <div class="spacer" />
       <Show when={exportStatus()}>
         <span class="toolbar-status">{exportStatus()}</span>
       </Show>
-      <Show when={isDirty()}>
-        <span class="dirty-indicator" title="Unsaved changes" aria-label="Unsaved changes" />
-      </Show>
-      <div class="mode-switcher">
-        <button
-          classList={{ active: editorMode() === "source" }}
-          onClick={() => setMode("source")}
-          title={`Source editor (${mod}E to cycle)`}
-        >
-          Source
-        </button>
-        <button
-          classList={{ active: editorMode() === "wysiwyg" }}
-          onClick={() => setMode("wysiwyg")}
-          title={`WYSIWYG editor (${mod}E to cycle)`}
-        >
-          WYSIWYG
-        </button>
-        <button
-          classList={{ active: editorMode() === "split" }}
-          onClick={() => setMode("split")}
-          title={`Split view (${mod}E to cycle)`}
-        >
-          Split
-        </button>
-        <button
-          classList={{ active: editorMode() === "preview" }}
-          onClick={() => setMode("preview")}
-          title={`Preview (${mod}P)`}
-        >
-          Preview
-        </button>
-      </div>
-      <button class="export-btn" onClick={handleExport} title="Export to HTML">
-        Export
+      <button
+        class="toolbar-icon-btn"
+        onClick={() => setShowSearch(!showSearch())}
+        classList={{ active: showSearch() }}
+        title="Search files"
+      >
+        &#8981;
       </button>
-      <button class="settings-btn" onClick={() => setShowSettings(true)} title="Settings">
+      <button class="toolbar-icon-btn" onClick={handleExport} title="Export to HTML">
+        &#8599;
+      </button>
+      <button class="toolbar-icon-btn" onClick={() => setShowSettings(true)} title="Settings">
         &#9881;
       </button>
     </div>

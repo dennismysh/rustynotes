@@ -1,7 +1,20 @@
-import { Component, For, Show, createSignal, createEffect } from "solid-js";
+import { Component, For, Show, createSignal, createEffect, createMemo } from "solid-js";
 import { appState } from "../../lib/state";
 import { readFile, parseMarkdown } from "../../lib/ipc";
 import type { FileEntry } from "../../lib/ipc";
+
+function filterMdEntries(entries: FileEntry[]): FileEntry[] {
+  return entries
+    .map((entry) => {
+      if (entry.is_dir) {
+        const filtered = entry.children ? filterMdEntries(entry.children) : [];
+        if (filtered.length === 0) return null;
+        return { ...entry, children: filtered };
+      }
+      return entry.name.endsWith(".md") ? entry : null;
+    })
+    .filter((e): e is FileEntry => e !== null);
+}
 
 const MillerColumns: Component = () => {
   const {
@@ -17,9 +30,11 @@ const MillerColumns: Component = () => {
   const [columns, setColumns] = createSignal<FileEntry[][]>([]);
   const [selectedPaths, setSelectedPaths] = createSignal<(string | null)[]>([]);
 
+  const mdTree = createMemo(() => filterMdEntries(fileTree()));
+
   // Re-initialize columns when the file tree changes
   createEffect(() => {
-    const tree = fileTree();
+    const tree = mdTree();
     if (tree.length > 0) {
       setColumns([tree]);
       setSelectedPaths([null]);

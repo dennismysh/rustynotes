@@ -127,39 +127,45 @@ html, body, #root {
   flex-shrink: 0;
 }
 
-.toolbar .dirty-indicator {
-  width: 8px;
-  height: 8px;
+.toolbar .toolbar-filename {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  -webkit-app-region: no-drag;
+  min-width: 0;
+}
+
+.toolbar .toolbar-filename .dirty-indicator {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--accent);
   flex-shrink: 0;
 }
 
-.toolbar .mode-switcher { display: flex; gap: 0; }
-.toolbar .mode-switcher button { border-radius: 0; border-right-width: 0; }
-.toolbar .mode-switcher button:first-child { border-radius: 6px 0 0 6px; }
-.toolbar .mode-switcher button:last-child { border-radius: 0 6px 6px 0; border-right-width: 1px; }
-
-/* Nav switcher (mirrors mode-switcher style) */
-.toolbar .nav-switcher { display: flex; gap: 0; }
-.toolbar .nav-switcher button { border-radius: 0; border-right-width: 0; }
-.toolbar .nav-switcher button:first-child { border-radius: 6px 0 0 6px; }
-.toolbar .nav-switcher button:last-child { border-radius: 0 6px 6px 0; border-right-width: 1px; }
-
-/* Settings gear button */
-.toolbar .settings-btn {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+.toolbar .toolbar-filename-text {
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbar .toolbar-icon-btn {
+  -webkit-app-region: no-drag;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-secondary);
   padding: 4px 8px;
   font-size: 16px;
   cursor: pointer;
   line-height: 1;
-  -webkit-app-region: no-drag;
 }
 
-.toolbar .settings-btn:hover { background: var(--bg-tertiary); }
+.toolbar .toolbar-icon-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.toolbar .toolbar-icon-btn.active { color: var(--accent); }
 
 /* ===== Sidebar ===== */
 
@@ -177,6 +183,32 @@ html, body, #root {
   grid-column: 2;
   overflow: hidden;
   position: relative;
+}
+
+/* ===== Sidebar Search ===== */
+
+.sidebar-search {
+  padding: 8px 8px 4px;
+}
+
+.sidebar-search input {
+  width: 100%;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: var(--font-body);
+  outline: none;
+}
+
+.sidebar-search input:focus {
+  border-color: var(--accent);
+}
+
+.sidebar-search input::placeholder {
+  color: var(--text-muted);
 }
 
 /* ===== Tree View ===== */
@@ -316,6 +348,22 @@ html, body, #root {
   line-height: var(--line-height);
   color: var(--text-primary);
 }
+
+/* WYSIWYG code block syntax highlighting (lowlight) */
+.wysiwyg-editor .tiptap pre code .hljs-keyword { color: var(--accent); }
+.wysiwyg-editor .tiptap pre code .hljs-string { color: var(--alert-tip); }
+.wysiwyg-editor .tiptap pre code .hljs-comment { color: var(--text-muted); font-style: italic; }
+.wysiwyg-editor .tiptap pre code .hljs-number { color: var(--alert-warning); }
+.wysiwyg-editor .tiptap pre code .hljs-function,
+.wysiwyg-editor .tiptap pre code .hljs-title { color: var(--alert-important); }
+.wysiwyg-editor .tiptap pre code .hljs-type,
+.wysiwyg-editor .tiptap pre code .hljs-built_in { color: var(--alert-caution); }
+.wysiwyg-editor .tiptap pre code .hljs-attr,
+.wysiwyg-editor .tiptap pre code .hljs-attribute { color: var(--alert-warning); }
+.wysiwyg-editor .tiptap pre code .hljs-literal { color: var(--accent); }
+.wysiwyg-editor .tiptap pre code .hljs-tag { color: var(--alert-caution); }
+.wysiwyg-editor .tiptap pre code .hljs-name { color: var(--alert-caution); }
+.wysiwyg-editor .tiptap pre code .hljs-selector-class { color: var(--alert-important); }
 
 /* WYSIWYG-specific: task lists */
 .wysiwyg-editor .tiptap ul[data-type="taskList"] {

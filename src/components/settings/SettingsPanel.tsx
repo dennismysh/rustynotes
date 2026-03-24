@@ -1,11 +1,10 @@
 import { Component, Show, onMount, onCleanup } from "solid-js";
-import { appState } from "../../lib/state";
+import { appState, type EditorMode, type NavMode } from "../../lib/state";
 import { saveConfig, type AppConfig } from "../../lib/ipc";
 import { applyTheme, resolveTheme } from "../../lib/theme";
 
 const SettingsPanel: Component = () => {
-  const { appConfig, setAppConfig, showSettings, setShowSettings } = appState;
-  let panelRef: HTMLDivElement | undefined;
+  const { appConfig, setAppConfig, showSettings, setShowSettings, editorMode, setEditorMode, navMode, setNavMode } = appState;
 
   const updateConfig = async (updater: (config: AppConfig) => AppConfig) => {
     const current = appConfig();
@@ -74,7 +73,6 @@ const SettingsPanel: Component = () => {
     return config.theme.overrides.colors?.accent || "#007aff";
   };
 
-  // Escape key handler
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Escape") {
       e.preventDefault();
@@ -82,7 +80,6 @@ const SettingsPanel: Component = () => {
     }
   };
 
-  // Focus trap: keep focus inside the panel when open
   onMount(() => {
     document.addEventListener("keydown", handleKeyDown);
   });
@@ -94,7 +91,6 @@ const SettingsPanel: Component = () => {
     <Show when={showSettings()}>
       <div class="settings-overlay" onClick={() => setShowSettings(false)}>
         <div
-          ref={panelRef}
           class="settings-panel"
           onClick={(e) => e.stopPropagation()}
           role="dialog"
@@ -112,6 +108,34 @@ const SettingsPanel: Component = () => {
             </button>
           </div>
           <div class="settings-body">
+            <div class="settings-section">
+              <h3>Editor</h3>
+              <div class="setting-row">
+                <label for="settings-editor-mode">Mode</label>
+                <select
+                  id="settings-editor-mode"
+                  value={editorMode()}
+                  onChange={(e) => setEditorMode(e.currentTarget.value as EditorMode)}
+                >
+                  <option value="wysiwyg">WYSIWYG</option>
+                  <option value="source">Source</option>
+                  <option value="split">Split</option>
+                  <option value="preview">Preview</option>
+                </select>
+              </div>
+              <div class="setting-row">
+                <label for="settings-nav-mode">Navigation</label>
+                <select
+                  id="settings-nav-mode"
+                  value={navMode()}
+                  onChange={(e) => setNavMode(e.currentTarget.value as NavMode)}
+                >
+                  <option value="sidebar">Tree</option>
+                  <option value="miller">Miller Columns</option>
+                  <option value="breadcrumb">Breadcrumb</option>
+                </select>
+              </div>
+            </div>
             <div class="settings-section">
               <h3>Appearance</h3>
               <div class="setting-row">

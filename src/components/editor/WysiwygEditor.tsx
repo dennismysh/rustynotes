@@ -4,8 +4,12 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "@tiptap/markdown";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { common, createLowlight } from "lowlight";
 import { appState } from "../../lib/state";
 import { writeFile, parseMarkdown } from "../../lib/ipc";
+
+const lowlight = createLowlight(common);
 
 const WysiwygEditor: Component = () => {
   let editorElement: HTMLDivElement | undefined;
@@ -26,7 +30,12 @@ const WysiwygEditor: Component = () => {
     editor = new Editor({
       element: editorElement,
       extensions: [
-        StarterKit,
+        StarterKit.configure({
+          codeBlock: false,
+        }),
+        CodeBlockLowlight.configure({
+          lowlight,
+        }),
         Markdown.configure({
           markedOptions: { gfm: true },
         }),

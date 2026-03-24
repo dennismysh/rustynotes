@@ -39,6 +39,7 @@ pub fn run() {
             commands::fs::write_file,
             commands::fs::list_directory,
             commands::fs::resolve_wikilink,
+            commands::fs::search_files,
             commands::markdown::parse_markdown,
             commands::config::get_config,
             commands::config::save_config_cmd,

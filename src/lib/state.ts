@@ -9,12 +9,14 @@ function createAppState() {
   const [fileTree, setFileTree] = createSignal<FileEntry[]>([]);
   const [activeFilePath, setActiveFilePath] = createSignal<string | null>(null);
   const [activeFileContent, setActiveFileContent] = createSignal<string>("");
-  const [editorMode, setEditorMode] = createSignal<EditorMode>("source");
+  const [editorMode, setEditorMode] = createSignal<EditorMode>("wysiwyg");
   const [isDirty, setIsDirty] = createSignal(false);
   const [renderedHtml, setRenderedHtml] = createSignal<string>("");
   const [appConfig, setAppConfig] = createSignal<AppConfig | null>(null);
   const [showSettings, setShowSettings] = createSignal(false);
   const [navMode, setNavMode] = createSignal<NavMode>("sidebar");
+  const [searchQuery, setSearchQuery] = createSignal("");
+  const [showSearch, setShowSearch] = createSignal(false);
 
   return {
     currentFolder,
@@ -37,6 +39,10 @@ function createAppState() {
     setShowSettings,
     navMode,
     setNavMode,
+    searchQuery,
+    setSearchQuery,
+    showSearch,
+    setShowSearch,
   };
 }
 

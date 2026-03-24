@@ -1,7 +1,34 @@
-import { Component, For, Show, createSignal } from "solid-js";
+import { Component, For, Show, createSignal, createMemo } from "solid-js";
 import { appState } from "../../lib/state";
 import { readFile, parseMarkdown } from "../../lib/ipc";
 import type { FileEntry } from "../../lib/ipc";
+
+function filterMdEntries(entries: FileEntry[]): FileEntry[] {
+  return entries
+    .map((entry) => {
+      if (entry.is_dir) {
+        const filtered = entry.children ? filterMdEntries(entry.children) : [];
+        if (filtered.length === 0) return null;
+        return { ...entry, children: filtered };
+      }
+      return entry.name.endsWith(".md") ? entry : null;
+    })
+    .filter((e): e is FileEntry => e !== null);
+}
+
+function filterByQuery(entries: FileEntry[], query: string): FileEntry[] {
+  const q = query.toLowerCase();
+  return entries
+    .map((entry) => {
+      if (entry.is_dir) {
+        const filtered = entry.children ? filterByQuery(entry.children, query) : [];
+        if (filtered.length === 0) return null;
+        return { ...entry, children: filtered };
+      }
+      return entry.name.toLowerCase().includes(q) ? entry : null;
+    })
+    .filter((e): e is FileEntry => e !== null);
+}
 
 const TreeNode: Component<{ entry: FileEntry; depth: number }> = (props) => {
   const [expanded, setExpanded] = createSignal(false);
@@ -83,22 +110,53 @@ const TreeNode: Component<{ entry: FileEntry; depth: number }> = (props) => {
 };
 
 const Sidebar: Component = () => {
-  const { fileTree, currentFolder } = appState;
+  const { fileTree, currentFolder, searchQuery, setSearchQuery, showSearch } = appState;
+
+  const filteredTree = createMemo(() => {
+    let tree = filterMdEntries(fileTree());
+    const q = searchQuery();
+    if (q.length > 0) {
+      tree = filterByQuery(tree, q);
+    }
+    return tree;
+  });
 
   return (
-    <div class="sidebar" role="tree" aria-label="File tree">
-      <Show
-        when={currentFolder()}
-        fallback={
-          <div style="padding: 16px; color: var(--text-muted); font-size: 13px; text-align: center;">
-            No folder open
-          </div>
-        }
-      >
-        <For each={fileTree()}>
-          {(entry) => <TreeNode entry={entry} depth={0} />}
-        </For>
+    <div class="sidebar">
+      <Show when={showSearch()}>
+        <div class="sidebar-search">
+          <input
+            type="text"
+            placeholder="Filter files..."
+            value={searchQuery()}
+            onInput={(e) => setSearchQuery(e.currentTarget.value)}
+            autofocus
+          />
+        </div>
       </Show>
+      <div role="tree" aria-label="File tree">
+        <Show
+          when={currentFolder()}
+          fallback={
+            <div style="padding: 16px; color: var(--text-muted); font-size: 13px; text-align: center;">
+              No folder open
+            </div>
+          }
+        >
+          <Show
+            when={filteredTree().length > 0}
+            fallback={
+              <div style="padding: 16px; color: var(--text-muted); font-size: 13px; text-align: center;">
+                {searchQuery() ? "No matching files" : "No markdown files"}
+              </div>
+            }
+          >
+            <For each={filteredTree()}>
+              {(entry) => <TreeNode entry={entry} depth={0} />}
+            </For>
+          </Show>
+        </Show>
+      </div>
     </div>
   );
 };

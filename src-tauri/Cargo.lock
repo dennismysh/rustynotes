@@ -3387,6 +3387,7 @@ name = "rustynotes"
 version = "0.1.0"
 dependencies = [
  "comrak",
+ "dirs",
  "notify",
  "serde",
  "serde_json",

@@ -16,7 +16,7 @@ import "./styles/base.css";
 const modes: EditorMode[] = ["source", "wysiwyg", "split", "preview"];
 
 const App: Component = () => {
-  const { activeFilePath, editorMode, setEditorMode, setAppConfig, navMode, setNavMode } = appState;
+  const { activeFilePath, editorMode, setEditorMode, setAppConfig, navMode, setNavMode, showSearch, setShowSearch, setSearchQuery } = appState;
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "e") {
@@ -40,6 +40,13 @@ const App: Component = () => {
     if ((e.metaKey || e.ctrlKey) && e.key === "3") {
       e.preventDefault();
       setNavMode("breadcrumb");
+    }
+    // Cmd+K / Ctrl+K toggles search
+    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      e.preventDefault();
+      const next = !showSearch();
+      setShowSearch(next);
+      if (!next) setSearchQuery("");
     }
   };
 
@@ -76,6 +83,9 @@ const App: Component = () => {
 
   onCleanup(() => document.removeEventListener("keydown", handleKeyDown));
 
+  const isMac = navigator.platform.includes("Mac");
+  const mod = isMac ? "\u2318" : "Ctrl+";
+
   return (
     <div
       class="app-shell"
@@ -103,11 +113,11 @@ const App: Component = () => {
               <h1 class="empty-state-title">Open a folder to get started</h1>
               <p class="hint">Click "Open Folder" in the toolbar, then select a markdown file.</p>
               <div class="empty-state-shortcuts">
-                <kbd>{navigator.platform.includes("Mac") ? "\u2318" : "Ctrl+"}E</kbd> Cycle editor modes
+                <kbd>{mod}E</kbd> Cycle editor modes
                 <span class="empty-state-sep">&middot;</span>
-                <kbd>{navigator.platform.includes("Mac") ? "\u2318" : "Ctrl+"}S</kbd> Save
+                <kbd>{mod}S</kbd> Save
                 <span class="empty-state-sep">&middot;</span>
-                <kbd>{navigator.platform.includes("Mac") ? "\u2318" : "Ctrl+"}1/2/3</kbd> Switch nav
+                <kbd>{mod}K</kbd> Search files
               </div>
             </div>
           }

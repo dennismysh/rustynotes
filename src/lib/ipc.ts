@@ -86,3 +86,13 @@ export async function showSaveDialog(defaultName: string, extension: string): Pr
   });
   return path as string | null;
 }
+
+export interface SearchResult {
+  path: string;
+  name: string;
+  context: string;
+}
+
+export async function searchFiles(root: string, query: string): Promise<SearchResult[]> {
+  return invoke<SearchResult[]>("search_files", { root, query });
+}
