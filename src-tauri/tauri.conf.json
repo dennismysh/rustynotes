@@ -15,7 +15,7 @@
         "title": "RustyNotes",
         "width": 800,
         "height": 600,
-        "backgroundColor": "#1e1e2e"
+        "visible": false
       }
     ],
     "security": {

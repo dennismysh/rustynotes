@@ -1,4 +1,5 @@
 import { Component, Show, onMount, onCleanup } from "solid-js";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import Toolbar from "./components/Toolbar";
 import Sidebar from "./components/navigation/Sidebar";
 import MillerColumns from "./components/navigation/MillerColumns";
@@ -16,7 +17,7 @@ import "./styles/base.css";
 const modes: EditorMode[] = ["source", "wysiwyg", "split", "preview"];
 
 const App: Component = () => {
-  const { activeFilePath, editorMode, setEditorMode, setAppConfig, navMode, setNavMode, showSearch, setShowSearch, setSearchQuery } = appState;
+  const { activeFilePath, editorMode, setEditorMode, setAppConfig, navMode, setNavMode, showSearch, setShowSearch, setSearchQuery, currentFolder } = appState;
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "e") {
@@ -58,6 +59,7 @@ const App: Component = () => {
       setAppConfig(config);
       applyTheme(resolveTheme(config.theme.active), config.theme.overrides);
       document.documentElement.classList.add("ready");
+      await getCurrentWindow().show();
 
       // Set editor mode from config
       const mode = config.editor_mode as EditorMode;
@@ -80,6 +82,7 @@ const App: Component = () => {
     } catch (e) {
       console.error("Failed to load config:", e);
       document.documentElement.classList.add("ready");
+      await getCurrentWindow().show();
     }
   });
 
@@ -112,15 +115,27 @@ const App: Component = () => {
           when={activeFilePath()}
           fallback={
             <div class="empty-state">
-              <h1 class="empty-state-title">Open a folder to get started</h1>
-              <p class="hint">Click "Open Folder" in the toolbar, then select a markdown file.</p>
-              <div class="empty-state-shortcuts">
-                <kbd>{mod}E</kbd> Cycle editor modes
-                <span class="empty-state-sep">&middot;</span>
-                <kbd>{mod}S</kbd> Save
-                <span class="empty-state-sep">&middot;</span>
-                <kbd>{mod}K</kbd> Search files
-              </div>
+              <Show
+                when={currentFolder()}
+                fallback={
+                  <>
+                    <h1 class="empty-state-title">RustyNotes</h1>
+                    <p class="hint">
+                      Open a folder of markdown files to start editing.
+                    </p>
+                    <div class="empty-state-shortcuts">
+                      <div class="shortcut-row"><kbd>{mod}K</kbd> <span>Search files</span></div>
+                      <div class="shortcut-row"><kbd>{mod}E</kbd> <span>Cycle editor mode</span></div>
+                      <div class="shortcut-row"><kbd>{mod}S</kbd> <span>Save</span></div>
+                    </div>
+                  </>
+                }
+              >
+                <h1 class="empty-state-title">Select a file</h1>
+                <p class="hint">
+                  Choose a markdown file from the sidebar, or press <kbd>{mod}K</kbd> to search.
+                </p>
+              </Show>
             </div>
           }
         >
