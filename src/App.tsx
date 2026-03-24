@@ -57,6 +57,7 @@ const App: Component = () => {
       const config = await getConfig();
       setAppConfig(config);
       applyTheme(resolveTheme(config.theme.active), config.theme.overrides);
+      document.getElementById("root")?.classList.add("ready");
 
       // Set editor mode from config
       const mode = config.editor_mode as EditorMode;
@@ -78,6 +79,7 @@ const App: Component = () => {
       }
     } catch (e) {
       console.error("Failed to load config:", e);
+      document.getElementById("root")?.classList.add("ready");
     }
   });
 
