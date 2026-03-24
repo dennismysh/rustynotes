@@ -4,6 +4,7 @@ import mermaid from "mermaid";
 import { codeToHtml } from "shiki";
 
 let mermaidInitialized = false;
+let mermaidIdCounter = 0;
 
 function initMermaid(isDark: boolean) {
   mermaid.initialize({
@@ -65,7 +66,7 @@ async function renderDiagrams(container: HTMLElement, isDark: boolean): Promise<
     const pre = el.closest("pre");
     if (!pre) continue;
     try {
-      const id = `mermaid-${Date.now()}-${i}`;
+      const id = `mermaid-${mermaidIdCounter++}`;
       const { svg } = await mermaid.render(id, code);
       const div = document.createElement("div");
       div.className = "mermaid-diagram";
@@ -78,15 +79,18 @@ async function renderDiagrams(container: HTMLElement, isDark: boolean): Promise<
 }
 
 async function highlightCode(container: HTMLElement, isDark: boolean): Promise<void> {
-  const codeBlocks = container.querySelectorAll("pre > code[class*='language-']");
-  for (const el of codeBlocks) {
+  const codeBlocks = Array.from(
+    container.querySelectorAll("pre > code[class*='language-']")
+  );
+
+  const highlights = codeBlocks.map(async (el) => {
     const langMatch = el.className.match(/language-(\w+)/);
-    if (!langMatch) continue;
+    if (!langMatch) return;
     const lang = langMatch[1];
-    if (lang === "mermaid") continue;
+    if (lang === "mermaid") return;
     const code = el.textContent || "";
     const pre = el.closest("pre");
-    if (!pre) continue;
+    if (!pre) return;
     try {
       const html = await codeToHtml(code, {
         lang,
@@ -99,5 +103,7 @@ async function highlightCode(container: HTMLElement, isDark: boolean): Promise<v
     } catch (_e) {
       // Leave unhighlighted on error
     }
-  }
+  });
+
+  await Promise.all(highlights);
 }

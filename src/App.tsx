@@ -67,6 +67,7 @@ const App: Component = () => {
           }
         };
         mediaQuery.addEventListener("change", handler);
+        onCleanup(() => mediaQuery.removeEventListener("change", handler));
       }
     } catch (e) {
       console.error("Failed to load config:", e);

@@ -1,10 +1,11 @@
-import { Component, Show } from "solid-js";
+import { Component, Show, onMount, onCleanup } from "solid-js";
 import { appState } from "../../lib/state";
 import { saveConfig, type AppConfig } from "../../lib/ipc";
 import { applyTheme, resolveTheme } from "../../lib/theme";
 
 const SettingsPanel: Component = () => {
   const { appConfig, setAppConfig, showSettings, setShowSettings } = appState;
+  let panelRef: HTMLDivElement | undefined;
 
   const updateConfig = async (updater: (config: AppConfig) => AppConfig) => {
     const current = appConfig();
@@ -73,13 +74,40 @@ const SettingsPanel: Component = () => {
     return config.theme.overrides.colors?.accent || "#007aff";
   };
 
+  // Escape key handler
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setShowSettings(false);
+    }
+  };
+
+  // Focus trap: keep focus inside the panel when open
+  onMount(() => {
+    document.addEventListener("keydown", handleKeyDown);
+  });
+  onCleanup(() => {
+    document.removeEventListener("keydown", handleKeyDown);
+  });
+
   return (
     <Show when={showSettings()}>
       <div class="settings-overlay" onClick={() => setShowSettings(false)}>
-        <div class="settings-panel" onClick={(e) => e.stopPropagation()}>
+        <div
+          ref={panelRef}
+          class="settings-panel"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Settings"
+        >
           <div class="settings-header">
             <h2>Settings</h2>
-            <button class="settings-close" onClick={() => setShowSettings(false)}>
+            <button
+              class="settings-close"
+              onClick={() => setShowSettings(false)}
+              aria-label="Close settings"
+            >
               &times;
             </button>
           </div>
@@ -87,8 +115,9 @@ const SettingsPanel: Component = () => {
             <div class="settings-section">
               <h3>Appearance</h3>
               <div class="setting-row">
-                <label>Theme</label>
+                <label for="settings-theme">Theme</label>
                 <select
+                  id="settings-theme"
                   value={appConfig()?.theme.active || "auto"}
                   onChange={(e) => setThemeActive(e.currentTarget.value)}
                 >
@@ -98,8 +127,9 @@ const SettingsPanel: Component = () => {
                 </select>
               </div>
               <div class="setting-row">
-                <label>Font Size: {currentFontSize()}px</label>
+                <label for="settings-font-size">Font Size: {currentFontSize()}px</label>
                 <input
+                  id="settings-font-size"
                   type="range"
                   min="12"
                   max="24"
@@ -108,8 +138,9 @@ const SettingsPanel: Component = () => {
                 />
               </div>
               <div class="setting-row">
-                <label>Accent Color</label>
+                <label for="settings-accent">Accent Color</label>
                 <input
+                  id="settings-accent"
                   type="color"
                   value={currentAccent()}
                   onInput={(e) => setAccentColor(e.currentTarget.value)}
@@ -119,46 +150,61 @@ const SettingsPanel: Component = () => {
             <div class="settings-section">
               <h3>Rendering</h3>
               <div class="setting-row">
-                <label>Math (LaTeX)</label>
+                <label id="label-math">Math (LaTeX)</label>
                 <button
                   class={`toggle-switch ${appConfig()?.rendering.render_math ? "on" : ""}`}
                   onClick={() => toggleRendering("render_math")}
+                  role="switch"
+                  aria-checked={appConfig()?.rendering.render_math ?? false}
+                  aria-labelledby="label-math"
                 >
                   <span class="toggle-knob" />
                 </button>
               </div>
               <div class="setting-row">
-                <label>Diagrams (Mermaid)</label>
+                <label id="label-diagrams">Diagrams (Mermaid)</label>
                 <button
                   class={`toggle-switch ${appConfig()?.rendering.render_diagrams ? "on" : ""}`}
                   onClick={() => toggleRendering("render_diagrams")}
+                  role="switch"
+                  aria-checked={appConfig()?.rendering.render_diagrams ?? false}
+                  aria-labelledby="label-diagrams"
                 >
                   <span class="toggle-knob" />
                 </button>
               </div>
               <div class="setting-row">
-                <label>Frontmatter</label>
+                <label id="label-frontmatter">Frontmatter</label>
                 <button
                   class={`toggle-switch ${appConfig()?.rendering.render_frontmatter ? "on" : ""}`}
                   onClick={() => toggleRendering("render_frontmatter")}
+                  role="switch"
+                  aria-checked={appConfig()?.rendering.render_frontmatter ?? false}
+                  aria-labelledby="label-frontmatter"
                 >
                   <span class="toggle-knob" />
                 </button>
               </div>
               <div class="setting-row">
-                <label>Line Numbers</label>
+                <label id="label-linenums">Line Numbers</label>
                 <button
                   class={`toggle-switch ${appConfig()?.rendering.show_line_numbers ? "on" : ""}`}
                   onClick={() => toggleRendering("show_line_numbers")}
+                  role="switch"
+                  aria-checked={appConfig()?.rendering.show_line_numbers ?? false}
+                  aria-labelledby="label-linenums"
                 >
                   <span class="toggle-knob" />
                 </button>
               </div>
               <div class="setting-row">
-                <label>Wiki-links</label>
+                <label id="label-wikilinks">Wiki-links</label>
                 <button
                   class={`toggle-switch ${appConfig()?.rendering.render_wikilinks ? "on" : ""}`}
                   onClick={() => toggleRendering("render_wikilinks")}
+                  role="switch"
+                  aria-checked={appConfig()?.rendering.render_wikilinks ?? false}
+                  aria-labelledby="label-wikilinks"
                 >
                   <span class="toggle-knob" />
                 </button>

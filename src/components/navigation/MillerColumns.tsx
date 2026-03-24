@@ -63,6 +63,45 @@ const MillerColumns: Component = () => {
     }
   };
 
+  const handleItemKeyDown = (e: KeyboardEvent, entry: FileEntry, colIndex: number) => {
+    const target = e.currentTarget as HTMLElement;
+
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleClick(entry, colIndex);
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = target.nextElementSibling as HTMLElement;
+      next?.focus();
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = target.previousElementSibling as HTMLElement;
+      prev?.focus();
+    }
+    if (e.key === "ArrowRight" && entry.is_dir) {
+      e.preventDefault();
+      handleClick(entry, colIndex);
+      // Focus first item in next column after render
+      requestAnimationFrame(() => {
+        const cols = document.querySelectorAll(".miller-column");
+        const nextCol = cols[colIndex + 1];
+        const firstItem = nextCol?.querySelector("[tabindex='0']") as HTMLElement;
+        firstItem?.focus();
+      });
+    }
+    if (e.key === "ArrowLeft" && colIndex > 0) {
+      e.preventDefault();
+      // Focus the selected item in the previous column
+      const cols = document.querySelectorAll(".miller-column");
+      const prevCol = cols[colIndex - 1];
+      const activeItem = prevCol?.querySelector(".miller-item.active") as HTMLElement
+        ?? prevCol?.querySelector("[tabindex='0']") as HTMLElement;
+      activeItem?.focus();
+    }
+  };
+
   return (
     <div class="sidebar">
       <Show
@@ -73,27 +112,34 @@ const MillerColumns: Component = () => {
           </div>
         }
       >
-        <div class="miller-columns">
+        <div class="miller-columns" role="group" aria-label="Miller column file browser">
           <For each={columns()}>
             {(column, colIndex) => (
-              <div class="miller-column">
+              <div class="miller-column" role="listbox" aria-label={`Column ${colIndex() + 1}`}>
                 <For each={column}>
-                  {(entry) => (
-                    <div
-                      class="miller-item"
-                      classList={{
-                        active:
-                          selectedPaths()[colIndex()] === entry.path ||
-                          activeFilePath() === entry.path,
-                      }}
-                      onClick={() => handleClick(entry, colIndex())}
-                    >
-                      <span>{entry.name}</span>
-                      <Show when={entry.is_dir}>
-                        <span class="chevron">&#9656;</span>
-                      </Show>
-                    </div>
-                  )}
+                  {(entry) => {
+                    const isActive = () =>
+                      selectedPaths()[colIndex()] === entry.path ||
+                      activeFilePath() === entry.path;
+
+                    return (
+                      <div
+                        class="miller-item"
+                        classList={{ active: isActive() }}
+                        onClick={() => handleClick(entry, colIndex())}
+                        onKeyDown={(e) => handleItemKeyDown(e, entry, colIndex())}
+                        tabIndex={0}
+                        role="option"
+                        aria-selected={isActive()}
+                        aria-label={`${entry.is_dir ? "Folder" : "File"}: ${entry.name}`}
+                      >
+                        <span>{entry.name}</span>
+                        <Show when={entry.is_dir}>
+                          <span class="chevron" aria-hidden="true">&#9656;</span>
+                        </Show>
+                      </div>
+                    );
+                  }}
                 </For>
               </div>
             )}

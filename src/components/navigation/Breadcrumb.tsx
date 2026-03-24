@@ -1,4 +1,4 @@
-import { Component, For, Show, createSignal, createMemo } from "solid-js";
+import { Component, For, Show, createSignal, createMemo, onCleanup } from "solid-js";
 import { appState } from "../../lib/state";
 import { listDirectory, readFile, parseMarkdown } from "../../lib/ipc";
 import type { FileEntry } from "../../lib/ipc";
@@ -33,6 +33,17 @@ const Breadcrumb: Component = () => {
     setDropdownIndex(null);
     setDropdownItems([]);
   };
+
+  // Close dropdown on Escape
+  const handleGlobalKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Escape" && dropdownIndex() !== null) {
+      e.preventDefault();
+      closeDropdown();
+    }
+  };
+
+  document.addEventListener("keydown", handleGlobalKeyDown);
+  onCleanup(() => document.removeEventListener("keydown", handleGlobalKeyDown));
 
   const handleSegmentClick = async (segmentIndex: number) => {
     const folder = currentFolder();
@@ -95,24 +106,46 @@ const Breadcrumb: Component = () => {
     }
   };
 
+  const handleDropdownKeyDown = (e: KeyboardEvent, entry: FileEntry) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleDropdownItemClick(entry);
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = (e.currentTarget as HTMLElement).nextElementSibling as HTMLElement;
+      next?.focus();
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = (e.currentTarget as HTMLElement).previousElementSibling as HTMLElement;
+      prev?.focus();
+    }
+  };
+
   return (
-    <div class="breadcrumb-bar">
+    <nav class="breadcrumb-bar" aria-label="File path">
       <Show when={currentFolder()}>
-        <span class="breadcrumb-root" onClick={handleRootClick}>
+        <button
+          class="breadcrumb-root"
+          onClick={handleRootClick}
+          aria-label={`Root folder: ${currentFolder()!.split("/").pop() || currentFolder()}`}
+        >
           {currentFolder()!.split("/").pop() || currentFolder()}
-        </span>
+        </button>
 
         <For each={pathSegments()}>
           {(segment, index) => (
             <>
-              <span class="breadcrumb-separator">/</span>
-              <span
+              <span class="breadcrumb-separator" aria-hidden="true">/</span>
+              <button
                 class="breadcrumb-segment"
                 classList={{ active: index() === pathSegments().length - 1 }}
                 onClick={() => handleSegmentClick(index())}
+                aria-current={index() === pathSegments().length - 1 ? "page" : undefined}
               >
                 {segment}
-              </span>
+              </button>
             </>
           )}
         </For>
@@ -124,21 +157,25 @@ const Breadcrumb: Component = () => {
 
       <Show when={dropdownIndex() !== null}>
         <div class="breadcrumb-dropdown-overlay" onClick={closeDropdown} />
-        <div class="breadcrumb-dropdown">
+        <div class="breadcrumb-dropdown" role="listbox" aria-label="Directory contents">
           <For each={dropdownItems()}>
             {(entry) => (
               <div
                 class="breadcrumb-dropdown-item"
                 onClick={() => handleDropdownItemClick(entry)}
+                onKeyDown={(e) => handleDropdownKeyDown(e, entry)}
+                tabIndex={0}
+                role="option"
+                aria-label={`${entry.is_dir ? "Folder" : "File"}: ${entry.name}`}
               >
-                <span>{entry.is_dir ? "\u{1F4C1}" : "\u{1F4C4}"}</span>
+                <span aria-hidden="true">{entry.is_dir ? "\u{1F4C1}" : "\u{1F4C4}"}</span>
                 <span>{entry.name}</span>
               </div>
             )}
           </For>
         </div>
       </Show>
-    </div>
+    </nav>
   );
 };
 

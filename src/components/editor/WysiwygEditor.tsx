@@ -75,7 +75,7 @@ const WysiwygEditor: Component = () => {
     editor?.destroy();
   });
 
-  return <div ref={editorElement} class="wysiwyg-editor" />;
+  return <div ref={editorElement} class="wysiwyg-editor markdown-content" />;
 };
 
 export default WysiwygEditor;

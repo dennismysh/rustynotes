@@ -26,6 +26,12 @@ export function applyTheme(theme: Theme, overrides?: { colors?: Record<string, s
   if (overrides?.colors) for (const [k, v] of Object.entries(overrides.colors)) root.style.setProperty(`--${k}`, v);
   if (overrides?.typography) for (const [k, v] of Object.entries(overrides.typography)) root.style.setProperty(`--${k}`, v);
   if (overrides?.spacing) for (const [k, v] of Object.entries(overrides.spacing)) root.style.setProperty(`--${k}`, v);
+
+  // Sync meta theme-color with the applied theme
+  const bgSecondary = overrides?.colors?.["bg-secondary"] ?? theme.colors["bg-secondary"];
+  if (bgSecondary) {
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bgSecondary);
+  }
 }
 
 export function getSystemTheme(): "light" | "dark" {

@@ -14,7 +14,7 @@ const Preview: Component = () => {
     }
   });
 
-  return <div ref={containerRef} class="preview-container" />;
+  return <div ref={containerRef} class="preview-container markdown-content" />;
 };
 
 export default Preview;

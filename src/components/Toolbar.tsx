@@ -1,9 +1,9 @@
-import { Component } from "solid-js";
+import { Component, Show } from "solid-js";
 import { appState, type EditorMode, type NavMode } from "../lib/state";
 import { openFolderDialog, listDirectory, watchFolder, exportFile, showSaveDialog } from "../lib/ipc";
 
 const Toolbar: Component = () => {
-  const { editorMode, setEditorMode, setCurrentFolder, setFileTree, setShowSettings, navMode, setNavMode, activeFileContent, activeFilePath } = appState;
+  const { editorMode, setEditorMode, setCurrentFolder, setFileTree, setShowSettings, navMode, setNavMode, activeFileContent, activeFilePath, isDirty } = appState;
 
   const handleOpenFolder = async () => {
     const folder = await openFolderDialog();
@@ -61,6 +61,9 @@ const Toolbar: Component = () => {
         </button>
       </div>
       <div class="spacer" />
+      <Show when={isDirty()}>
+        <span class="dirty-indicator" title="Unsaved changes" aria-label="Unsaved changes" />
+      </Show>
       <div class="mode-switcher">
         <button
           classList={{ active: editorMode() === "source" }}
