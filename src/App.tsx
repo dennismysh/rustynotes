@@ -10,7 +10,7 @@ import SplitPane from "./components/editor/SplitPane";
 import Preview from "./components/preview/Preview";
 import SettingsPanel from "./components/settings/SettingsPanel";
 import { appState, type EditorMode } from "./lib/state";
-import { getConfig, openFolderDialog, listDirectory, watchFolder } from "./lib/ipc";
+import { getConfig, saveConfig, openFolderDialog, listDirectory, watchFolder, type AppConfig } from "./lib/ipc";
 import { applyTheme, resolveTheme } from "./lib/theme";
 import "./styles/base.css";
 
@@ -19,14 +19,25 @@ const modes: EditorMode[] = ["source", "wysiwyg", "split", "preview"];
 const App: Component = () => {
   const { activeFilePath, editorMode, setEditorMode, setAppConfig, navMode, setNavMode, showSearch, setShowSearch, setSearchQuery, currentFolder, setCurrentFolder, setFileTree } = appState;
 
+  const openFolder = async (folder: string) => {
+    setCurrentFolder(folder);
+    const tree = await listDirectory(folder);
+    setFileTree(tree);
+    await watchFolder(folder);
+
+    // Persist to recent_folders
+    const config = appState.appConfig();
+    if (config) {
+      const recent = [folder, ...config.recent_folders.filter((f) => f !== folder)].slice(0, 10);
+      const updated: AppConfig = { ...config, recent_folders: recent };
+      setAppConfig(updated);
+      saveConfig(updated).catch((e) => console.error("Failed to save config:", e));
+    }
+  };
+
   const handleOpenFolder = async () => {
     const folder = await openFolderDialog();
-    if (folder) {
-      setCurrentFolder(folder);
-      const tree = await listDirectory(folder);
-      setFileTree(tree);
-      await watchFolder(folder);
-    }
+    if (folder) await openFolder(folder);
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -75,6 +86,15 @@ const App: Component = () => {
       const mode = config.editor_mode as EditorMode;
       if (modes.includes(mode)) {
         setEditorMode(mode);
+      }
+
+      // Reopen last folder
+      if (config.recent_folders.length > 0) {
+        try {
+          await openFolder(config.recent_folders[0]);
+        } catch (e) {
+          console.error("Failed to reopen folder:", e);
+        }
       }
 
       // Listen for OS theme changes when active === "auto"

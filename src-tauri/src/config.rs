@@ -49,7 +49,7 @@ pub struct RenderingToggles {
 }
 
 fn default_true() -> bool { true }
-fn default_editor_mode() -> String { "source".to_string() }
+fn default_editor_mode() -> String { "wysiwyg".to_string() }
 fn default_nav_mode() -> String { "sidebar".to_string() }
 fn default_active_theme() -> String { "auto".to_string() }
 
@@ -112,7 +112,7 @@ mod tests {
         let config = AppConfig::default();
         let json = serde_json::to_string(&config).unwrap();
         let parsed: AppConfig = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed.editor_mode, "source");
+        assert_eq!(parsed.editor_mode, "wysiwyg");
         assert_eq!(parsed.theme.active, "auto");
         assert!(parsed.rendering.render_math);
     }
