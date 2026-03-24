@@ -100,8 +100,15 @@ const App: Component = () => {
           when={activeFilePath()}
           fallback={
             <div class="empty-state">
-              <div style="font-size: 32px">Open a folder to get started</div>
-              <div class="hint">Click "Open Folder" in the toolbar</div>
+              <h1 class="empty-state-title">Open a folder to get started</h1>
+              <p class="hint">Click "Open Folder" in the toolbar, then select a markdown file.</p>
+              <div class="empty-state-shortcuts">
+                <kbd>{navigator.platform.includes("Mac") ? "\u2318" : "Ctrl+"}E</kbd> Cycle editor modes
+                <span class="empty-state-sep">&middot;</span>
+                <kbd>{navigator.platform.includes("Mac") ? "\u2318" : "Ctrl+"}S</kbd> Save
+                <span class="empty-state-sep">&middot;</span>
+                <kbd>{navigator.platform.includes("Mac") ? "\u2318" : "Ctrl+"}1/2/3</kbd> Switch nav
+              </div>
             </div>
           }
         >

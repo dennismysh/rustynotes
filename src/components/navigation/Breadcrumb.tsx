@@ -168,7 +168,7 @@ const Breadcrumb: Component = () => {
                 role="option"
                 aria-label={`${entry.is_dir ? "Folder" : "File"}: ${entry.name}`}
               >
-                <span aria-hidden="true">{entry.is_dir ? "\u{1F4C1}" : "\u{1F4C4}"}</span>
+                <span class="icon" aria-hidden="true">{entry.is_dir ? "\u25B8" : "\u2013"}</span>
                 <span>{entry.name}</span>
               </div>
             )}

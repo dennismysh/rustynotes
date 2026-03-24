@@ -67,7 +67,7 @@ const TreeNode: Component<{ entry: FileEntry; depth: number }> = (props) => {
         aria-label={`${props.entry.is_dir ? "Folder" : "File"}: ${props.entry.name}`}
       >
         <span class="icon" aria-hidden="true">
-          {props.entry.is_dir ? (expanded() ? "\u25BC" : "\u25B6") : "\uD83D\uDCC4"}
+          {props.entry.is_dir ? (expanded() ? "\u25BE" : "\u25B8") : "\u2013"}
         </span>
         <span class="name">{props.entry.name}</span>
       </div>

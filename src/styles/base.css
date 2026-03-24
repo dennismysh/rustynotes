@@ -121,6 +121,12 @@ html, body, #root {
 
 .toolbar .spacer { flex: 1; }
 
+.toolbar .toolbar-status {
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
 .toolbar .dirty-indicator {
   width: 8px;
   height: 8px;
@@ -253,7 +259,34 @@ html, body, #root {
   color: var(--text-muted);
   gap: 12px;
 }
+
+.empty-state-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
 .empty-state .hint { font-size: 13px; }
+
+.empty-state-shortcuts {
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.empty-state-shortcuts kbd {
+  display: inline-block;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.empty-state-sep {
+  margin: 0 8px;
+  color: var(--border);
+}
 
 /* ===== CodeMirror ===== */
 
