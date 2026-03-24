@@ -38,9 +38,10 @@ const Toolbar: Component = () => {
 
     try {
       await exportFile(content, savePath, "html", true);
-      showStatus("Exported");
+      const savedName = savePath.split("/").pop() ?? "file";
+      showStatus(`Saved ${savedName}`);
     } catch (e) {
-      showStatus("Export failed");
+      showStatus("Could not export");
       console.error("Export failed:", e);
     }
   };
@@ -50,6 +51,8 @@ const Toolbar: Component = () => {
     if (!path) return null;
     return path.split("/").pop() ?? null;
   });
+
+  const isMac = navigator.platform.includes("Mac");
 
   return (
     <div class="toolbar">
@@ -73,15 +76,15 @@ const Toolbar: Component = () => {
         class="toolbar-icon-btn"
         onClick={() => setShowSearch(!showSearch())}
         classList={{ active: showSearch() }}
-        title="Search files"
+        title={`Search files (${isMac ? "\u2318" : "Ctrl+"}K)`}
       >
-        &#8981;
+        &#x2315;
       </button>
-      <button class="toolbar-icon-btn" onClick={handleExport} title="Export to HTML">
-        &#8599;
+      <button class="toolbar-icon-btn" onClick={handleExport} title="Export as HTML">
+        &#x21E5;
       </button>
       <button class="toolbar-icon-btn" onClick={() => setShowSettings(true)} title="Settings">
-        &#9881;
+        &#x2699;
       </button>
     </div>
   );

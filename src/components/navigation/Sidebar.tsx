@@ -139,7 +139,7 @@ const Sidebar: Component = () => {
           when={currentFolder()}
           fallback={
             <div style="padding: 16px; color: var(--text-muted); font-size: 13px; text-align: center;">
-              No folder open
+              Open a folder to browse files
             </div>
           }
         >
@@ -147,7 +147,7 @@ const Sidebar: Component = () => {
             when={filteredTree().length > 0}
             fallback={
               <div style="padding: 16px; color: var(--text-muted); font-size: 13px; text-align: center;">
-                {searchQuery() ? "No matching files" : "No markdown files"}
+                {searchQuery() ? "No files match your search" : "No .md files in this folder"}
               </div>
             }
           >

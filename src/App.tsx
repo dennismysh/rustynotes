@@ -138,8 +138,8 @@ const App: Component = () => {
                     </button>
                     <div class="empty-state-shortcuts">
                       <div class="shortcut-row"><kbd>{mod}K</kbd> <span>Search files</span></div>
-                      <div class="shortcut-row"><kbd>{mod}E</kbd> <span>Cycle editor mode</span></div>
-                      <div class="shortcut-row"><kbd>{mod}S</kbd> <span>Save</span></div>
+                      <div class="shortcut-row"><kbd>{mod}E</kbd> <span>Switch editor mode</span></div>
+                      <div class="shortcut-row"><kbd>{mod}S</kbd> <span>Save file</span></div>
                     </div>
                   </>
                 }

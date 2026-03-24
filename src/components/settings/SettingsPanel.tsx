@@ -117,10 +117,10 @@ const SettingsPanel: Component = () => {
                   value={editorMode()}
                   onChange={(e) => setEditorMode(e.currentTarget.value as EditorMode)}
                 >
-                  <option value="wysiwyg">WYSIWYG</option>
-                  <option value="source">Source</option>
-                  <option value="split">Split</option>
-                  <option value="preview">Preview</option>
+                  <option value="wysiwyg">Rich text</option>
+                  <option value="source">Markdown source</option>
+                  <option value="split">Side by side</option>
+                  <option value="preview">Read only</option>
                 </select>
               </div>
               <div class="setting-row">
@@ -130,9 +130,9 @@ const SettingsPanel: Component = () => {
                   value={navMode()}
                   onChange={(e) => setNavMode(e.currentTarget.value as NavMode)}
                 >
-                  <option value="sidebar">Tree</option>
-                  <option value="miller">Miller Columns</option>
-                  <option value="breadcrumb">Breadcrumb</option>
+                  <option value="sidebar">Sidebar tree</option>
+                  <option value="miller">Multi-column</option>
+                  <option value="breadcrumb">Breadcrumb path</option>
                 </select>
               </div>
             </div>
@@ -172,9 +172,9 @@ const SettingsPanel: Component = () => {
               </div>
             </div>
             <div class="settings-section">
-              <h3>Rendering</h3>
+              <h3>Preview</h3>
               <div class="setting-row">
-                <label id="label-math">Math (LaTeX)</label>
+                <label id="label-math">Math equations</label>
                 <button
                   class={`toggle-switch ${appConfig()?.rendering.render_math ? "on" : ""}`}
                   onClick={() => toggleRendering("render_math")}
@@ -186,7 +186,7 @@ const SettingsPanel: Component = () => {
                 </button>
               </div>
               <div class="setting-row">
-                <label id="label-diagrams">Diagrams (Mermaid)</label>
+                <label id="label-diagrams">Diagrams</label>
                 <button
                   class={`toggle-switch ${appConfig()?.rendering.render_diagrams ? "on" : ""}`}
                   onClick={() => toggleRendering("render_diagrams")}
@@ -198,7 +198,7 @@ const SettingsPanel: Component = () => {
                 </button>
               </div>
               <div class="setting-row">
-                <label id="label-frontmatter">Frontmatter</label>
+                <label id="label-frontmatter">YAML header</label>
                 <button
                   class={`toggle-switch ${appConfig()?.rendering.render_frontmatter ? "on" : ""}`}
                   onClick={() => toggleRendering("render_frontmatter")}
@@ -210,7 +210,7 @@ const SettingsPanel: Component = () => {
                 </button>
               </div>
               <div class="setting-row">
-                <label id="label-linenums">Line Numbers</label>
+                <label id="label-linenums">Code line numbers</label>
                 <button
                   class={`toggle-switch ${appConfig()?.rendering.show_line_numbers ? "on" : ""}`}
                   onClick={() => toggleRendering("show_line_numbers")}
@@ -222,7 +222,7 @@ const SettingsPanel: Component = () => {
                 </button>
               </div>
               <div class="setting-row">
-                <label id="label-wikilinks">Wiki-links</label>
+                <label id="label-wikilinks">[[Wiki links]]</label>
                 <button
                   class={`toggle-switch ${appConfig()?.rendering.render_wikilinks ? "on" : ""}`}
                   onClick={() => toggleRendering("render_wikilinks")}
