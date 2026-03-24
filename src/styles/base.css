@@ -320,6 +320,23 @@ body, #root {
 
 .empty-state .hint { font-size: 13px; line-height: 1.5; }
 
+.empty-state-cta {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: none;
+  border-radius: 6px;
+  padding: var(--space-sm) var(--space-lg);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  margin-top: var(--space-sm);
+}
+
+.empty-state-cta:hover {
+  filter: brightness(1.1);
+}
+
 .empty-state-shortcuts {
   display: flex;
   flex-direction: column;

@@ -10,14 +10,24 @@ import SplitPane from "./components/editor/SplitPane";
 import Preview from "./components/preview/Preview";
 import SettingsPanel from "./components/settings/SettingsPanel";
 import { appState, type EditorMode } from "./lib/state";
-import { getConfig } from "./lib/ipc";
+import { getConfig, openFolderDialog, listDirectory, watchFolder } from "./lib/ipc";
 import { applyTheme, resolveTheme } from "./lib/theme";
 import "./styles/base.css";
 
 const modes: EditorMode[] = ["source", "wysiwyg", "split", "preview"];
 
 const App: Component = () => {
-  const { activeFilePath, editorMode, setEditorMode, setAppConfig, navMode, setNavMode, showSearch, setShowSearch, setSearchQuery, currentFolder } = appState;
+  const { activeFilePath, editorMode, setEditorMode, setAppConfig, navMode, setNavMode, showSearch, setShowSearch, setSearchQuery, currentFolder, setCurrentFolder, setFileTree } = appState;
+
+  const handleOpenFolder = async () => {
+    const folder = await openFolderDialog();
+    if (folder) {
+      setCurrentFolder(folder);
+      const tree = await listDirectory(folder);
+      setFileTree(tree);
+      await watchFolder(folder);
+    }
+  };
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "e") {
@@ -121,8 +131,11 @@ const App: Component = () => {
                   <>
                     <h1 class="empty-state-title">RustyNotes</h1>
                     <p class="hint">
-                      Open a folder of markdown files to start editing.
+                      A local-first markdown editor with WYSIWYG editing, LaTeX math, Mermaid diagrams, and syntax-highlighted code.
                     </p>
+                    <button class="empty-state-cta" onClick={handleOpenFolder}>
+                      Open Folder
+                    </button>
                     <div class="empty-state-shortcuts">
                       <div class="shortcut-row"><kbd>{mod}K</kbd> <span>Search files</span></div>
                       <div class="shortcut-row"><kbd>{mod}E</kbd> <span>Cycle editor mode</span></div>
