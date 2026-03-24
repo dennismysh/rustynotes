@@ -15,8 +15,14 @@
   --alert-caution: #cf222e;
   --shadow-color: rgba(0, 0, 0, 0.12);
   --overlay-bg: rgba(0, 0, 0, 0.4);
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 20px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
   --sidebar-width: 250px;
-  --toolbar-height: 40px;
+  --toolbar-height: 44px;
   --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", monospace;
   --font-size: 15px;
@@ -91,8 +97,8 @@ html, body, #root {
   grid-row: 1;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 12px;
+  gap: var(--space-sm);
+  padding: 0 var(--space-md);
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   -webkit-app-region: drag;
@@ -105,7 +111,7 @@ html, body, #root {
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text-primary);
-  padding: 6px 12px;
+  padding: var(--space-xs) var(--space-md);
   font-size: 12px;
   cursor: pointer;
   font-family: var(--font-body);
@@ -158,7 +164,7 @@ html, body, #root {
   border: none;
   border-radius: 6px;
   color: var(--text-secondary);
-  padding: 4px 8px;
+  padding: var(--space-xs) var(--space-sm);
   font-size: 16px;
   cursor: pointer;
   line-height: 1;
@@ -175,7 +181,7 @@ html, body, #root {
   background: var(--bg-secondary);
   border-right: 1px solid var(--border);
   overflow-y: auto;
-  padding: 8px 0;
+  padding: var(--space-sm) 0;
 }
 
 .content-area {
@@ -188,7 +194,7 @@ html, body, #root {
 /* ===== Sidebar Search ===== */
 
 .sidebar-search {
-  padding: 8px 8px 4px;
+  padding: 0 var(--space-sm) var(--space-sm);
 }
 
 .sidebar-search input {
@@ -197,7 +203,7 @@ html, body, #root {
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text-primary);
-  padding: 5px 10px;
+  padding: var(--space-xs) var(--space-sm);
   font-size: 12px;
   font-family: var(--font-body);
   outline: none;
@@ -216,11 +222,11 @@ html, body, #root {
 .tree-item {
   display: flex;
   align-items: center;
-  padding: 4px 12px;
+  padding: 5px var(--space-md);
   cursor: pointer;
   font-size: 13px;
   color: var(--text-primary);
-  gap: 6px;
+  gap: var(--space-xs);
   user-select: none;
 }
 
@@ -232,11 +238,17 @@ html, body, #root {
 
 /* ===== Shared Markdown Content ===== */
 
-.markdown-content h1 { font-size: 2em; margin: 0.67em 0; }
-.markdown-content h2 { font-size: 1.5em; margin: 0.75em 0; }
-.markdown-content h3 { font-size: 1.17em; margin: 0.83em 0; }
-.markdown-content p { margin: 1em 0; }
-.markdown-content ul, .markdown-content ol { margin: 1em 0; padding-left: 2em; }
+.markdown-content h1 { font-size: 2.2em; font-weight: 700; letter-spacing: -0.02em; margin: 1em 0 0.5em; }
+.markdown-content h2 { font-size: 1.65em; font-weight: 600; margin: 1.2em 0 0.4em; }
+.markdown-content h3 { font-size: 1.3em; font-weight: 600; margin: 1.1em 0 0.35em; }
+.markdown-content h4 { font-size: 1.1em; font-weight: 600; margin: 1em 0 0.3em; }
+.markdown-content h5 { font-size: 0.95em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin: 1em 0 0.3em; }
+.markdown-content h6 { font-size: 0.9em; font-weight: 600; color: var(--text-secondary); margin: 1em 0 0.3em; }
+.markdown-content p { margin: 0.8em 0; }
+.markdown-content ul, .markdown-content ol { margin: 0.8em 0; padding-left: 2em; }
+
+/* First child in content should not have top margin */
+.markdown-content > :first-child { margin-top: 0; }
 .markdown-content code {
   background: var(--bg-tertiary);
   padding: 2px 6px;
@@ -273,7 +285,7 @@ html, body, #root {
 /* ===== Preview ===== */
 
 .preview-container {
-  padding: 24px 40px;
+  padding: var(--space-xl) 40px var(--space-lg);
   max-width: 800px;
   margin: 0 auto;
   overflow-y: auto;
@@ -285,24 +297,29 @@ html, body, #root {
 .empty-state {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
   height: 100%;
   color: var(--text-muted);
-  gap: 12px;
+  gap: var(--space-sm);
+  padding: var(--space-2xl) var(--space-2xl);
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 .empty-state-title {
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--text-secondary);
+  letter-spacing: -0.01em;
 }
 
-.empty-state .hint { font-size: 13px; }
+.empty-state .hint { font-size: 13px; line-height: 1.5; }
 
 .empty-state-shortcuts {
   font-size: 12px;
-  margin-top: 8px;
+  margin-top: var(--space-md);
+  color: var(--text-muted);
+  line-height: 1.8;
 }
 
 .empty-state-shortcuts kbd {
@@ -310,13 +327,14 @@ html, body, #root {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 1px 5px;
+  padding: 1px 6px;
   font-family: var(--font-mono);
   font-size: 11px;
+  color: var(--text-secondary);
 }
 
 .empty-state-sep {
-  margin: 0 8px;
+  margin: 0 6px;
   color: var(--border);
 }
 
@@ -335,7 +353,7 @@ html, body, #root {
 .wysiwyg-editor {
   height: 100%;
   overflow-y: auto;
-  padding: 24px 40px;
+  padding: var(--space-xl) 40px var(--space-lg);
   max-width: 800px;
   margin: 0 auto;
 }
@@ -402,7 +420,7 @@ html, body, #root {
 }
 
 .split-pane-right .preview-container {
-  padding: 24px 20px;
+  padding: var(--space-xl) var(--space-lg);
 }
 
 /* ===== Admonitions / GitHub-style Alerts ===== */
@@ -505,7 +523,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: var(--space-md) var(--space-lg);
   border-bottom: 1px solid var(--border);
 }
 
@@ -527,24 +545,28 @@ html, body, #root {
 
 .settings-close:hover { color: var(--text-primary); }
 
-.settings-body { padding: 16px 20px; }
+.settings-body { padding: var(--space-lg); }
 
-.settings-section { margin-bottom: 24px; }
+.settings-section { margin-bottom: var(--space-xl); }
+
+.settings-section:last-child { margin-bottom: 0; }
 
 .settings-section h3 {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
-  margin-bottom: 12px;
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--border);
 }
 
 .setting-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: 6px 0;
 }
 
 .setting-row label {
