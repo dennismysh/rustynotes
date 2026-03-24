@@ -243,14 +243,19 @@ body, #root {
 
 /* ===== Shared Markdown Content ===== */
 
-.markdown-content h1 { font-size: 2.2em; font-weight: 700; letter-spacing: -0.02em; margin: 1em 0 0.5em; }
-.markdown-content h2 { font-size: 1.65em; font-weight: 600; margin: 1.2em 0 0.4em; }
-.markdown-content h3 { font-size: 1.3em; font-weight: 600; margin: 1.1em 0 0.35em; }
-.markdown-content h4 { font-size: 1.1em; font-weight: 600; margin: 1em 0 0.3em; }
-.markdown-content h5 { font-size: 0.95em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin: 1em 0 0.3em; }
-.markdown-content h6 { font-size: 0.9em; font-weight: 600; color: var(--text-secondary); margin: 1em 0 0.3em; }
-.markdown-content p { margin: 0.8em 0; }
-.markdown-content ul, .markdown-content ol { margin: 0.8em 0; padding-left: 2em; }
+.markdown-content h1, .markdown-content h2, .markdown-content h3,
+.markdown-content h4, .markdown-content h5, .markdown-content h6 {
+  line-height: 1.25;
+}
+
+.markdown-content h1 { font-size: 2.2em; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin: 1.2em 0 0.5em; }
+.markdown-content h2 { font-size: 1.65em; font-weight: 600; letter-spacing: -0.01em; margin: 1.4em 0 0.45em; }
+.markdown-content h3 { font-size: 1.3em; font-weight: 600; margin: 1.3em 0 0.4em; }
+.markdown-content h4 { font-size: 1.1em; font-weight: 600; margin: 1.2em 0 0.35em; }
+.markdown-content h5 { font-size: 0.9em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin: 1.2em 0 0.35em; }
+.markdown-content h6 { font-size: 0.85em; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.03em; margin: 1.2em 0 0.35em; }
+.markdown-content p { margin: 0.85em 0; }
+.markdown-content ul, .markdown-content ol { margin: 0.85em 0; padding-left: 2em; }
 
 /* First child in content should not have top margin */
 .markdown-content > :first-child { margin-top: 0; }
@@ -274,6 +279,7 @@ body, #root {
   border-left: 3px solid var(--accent);
   padding-left: 16px;
   color: var(--text-secondary);
+  font-style: italic;
   margin: 1em 0;
 }
 .markdown-content a { color: var(--accent); text-decoration: none; }
@@ -283,6 +289,7 @@ body, #root {
   border: 1px solid var(--border);
   padding: 8px 12px;
   text-align: left;
+  font-variant-numeric: tabular-nums;
 }
 .markdown-content th { background: var(--bg-secondary); font-weight: 600; }
 .markdown-content img { max-width: 100%; }
@@ -291,7 +298,7 @@ body, #root {
 
 .preview-container {
   padding: var(--space-xl) 40px var(--space-lg);
-  max-width: 800px;
+  max-width: 65ch;
   margin: 0 auto;
   overflow-y: auto;
   height: 100%;
@@ -381,7 +388,7 @@ body, #root {
   height: 100%;
   overflow-y: auto;
   padding: var(--space-xl) 40px var(--space-lg);
-  max-width: 800px;
+  max-width: 65ch;
   margin: 0 auto;
 }
 
