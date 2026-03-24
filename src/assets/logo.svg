@@ -1,1 +1,80 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 166 155.3"><path d="M163 35S110-4 69 5l-3 1c-6 2-11 5-14 9l-2 3-15 26 26 5c11 7 25 10 38 7l46 9 18-30z" fill="#76b3e1"/><linearGradient id="a" gradientUnits="userSpaceOnUse" x1="27.5" y1="3" x2="152" y2="63.5"><stop offset=".1" stop-color="#76b3e1"/><stop offset=".3" stop-color="#dcf2fd"/><stop offset="1" stop-color="#76b3e1"/></linearGradient><path d="M163 35S110-4 69 5l-3 1c-6 2-11 5-14 9l-2 3-15 26 26 5c11 7 25 10 38 7l46 9 18-30z" opacity=".3" fill="url(#a)"/><path d="M52 35l-4 1c-17 5-22 21-13 35 10 13 31 20 48 15l62-21S92 26 52 35z" fill="#518ac8"/><linearGradient id="b" gradientUnits="userSpaceOnUse" x1="95.8" y1="32.6" x2="74" y2="105.2"><stop offset="0" stop-color="#76b3e1"/><stop offset=".5" stop-color="#4377bb"/><stop offset="1" stop-color="#1f3b77"/></linearGradient><path d="M52 35l-4 1c-17 5-22 21-13 35 10 13 31 20 48 15l62-21S92 26 52 35z" opacity=".3" fill="url(#b)"/><linearGradient id="c" gradientUnits="userSpaceOnUse" x1="18.4" y1="64.2" x2="144.3" y2="149.8"><stop offset="0" stop-color="#315aa9"/><stop offset=".5" stop-color="#518ac8"/><stop offset="1" stop-color="#315aa9"/></linearGradient><path d="M134 80a45 45 0 00-48-15L24 85 4 120l112 19 20-36c4-7 3-15-2-23z" fill="url(#c)"/><linearGradient id="d" gradientUnits="userSpaceOnUse" x1="75.2" y1="74.5" x2="24.4" y2="260.8"><stop offset="0" stop-color="#4377bb"/><stop offset=".5" stop-color="#1a336b"/><stop offset="1" stop-color="#1a336b"/></linearGradient><path d="M114 115a45 45 0 00-48-15L4 120s53 40 94 30l3-1c17-5 23-21 13-34z" fill="url(#d)"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="rustGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C45A2D"/>
+      <stop offset="100%" stop-color="#8B3A1A"/>
+    </linearGradient>
+    <linearGradient id="pageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5F0EB"/>
+      <stop offset="100%" stop-color="#E8DFD5"/>
+    </linearGradient>
+    <linearGradient id="codeBlockGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3B2F2A"/>
+      <stop offset="100%" stop-color="#2A1F1A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect x="32" y="32" width="448" height="448" rx="96" ry="96" fill="url(#rustGrad)"/>
+
+  <!-- Abstract page/document shape -->
+  <g transform="translate(256, 248) rotate(-3)">
+    <!-- Page shadow -->
+    <rect x="-108" y="-138" width="216" height="280" rx="12" fill="#7A2E12" opacity="0.35" transform="translate(6, 6)"/>
+    <!-- Page -->
+    <rect x="-108" y="-138" width="216" height="280" rx="12" fill="url(#pageGrad)"/>
+
+    <!-- Markdown # — two vertical + two horizontal bars -->
+    <g stroke="#C45A2D" stroke-width="10" stroke-linecap="round" opacity="0.85">
+      <line x1="-22" y1="-72" x2="-30" y2="32"/>
+      <line x1="22" y1="-72" x2="14" y2="32"/>
+      <line x1="-52" y1="-38" x2="52" y2="-38"/>
+      <line x1="-52" y1="2" x2="52" y2="2"/>
+    </g>
+
+    <!-- Code block region — dark inset strip at bottom of page -->
+    <rect x="-88" y="52" width="176" height="68" rx="6" fill="url(#codeBlockGrad)" opacity="0.75"/>
+
+    <!-- Syntax highlighting lines inside code block -->
+    <!-- keyword -->
+    <rect x="-72" y="64" width="28" height="5" rx="2.5" fill="#E8875B" opacity="0.9"/>
+    <!-- identifier -->
+    <rect x="-38" y="64" width="42" height="5" rx="2.5" fill="#D4C4A8" opacity="0.7"/>
+    <!-- punctuation -->
+    <rect x="10" y="64" width="10" height="5" rx="2.5" fill="#8B7D6B" opacity="0.5"/>
+
+    <!-- second line -->
+    <rect x="-62" y="78" width="18" height="5" rx="2.5" fill="#7DAEA3" opacity="0.85"/>
+    <rect x="-38" y="78" width="50" height="5" rx="2.5" fill="#D4C4A8" opacity="0.6"/>
+
+    <!-- third line — shorter, indented -->
+    <rect x="-62" y="92" width="34" height="5" rx="2.5" fill="#E8875B" opacity="0.8"/>
+    <rect x="-22" y="92" width="20" height="5" rx="2.5" fill="#A9B665" opacity="0.7"/>
+    <rect x="4" y="92" width="38" height="5" rx="2.5" fill="#D4C4A8" opacity="0.5"/>
+
+    <!-- fourth line -->
+    <rect x="-72" y="106" width="12" height="5" rx="2.5" fill="#8B7D6B" opacity="0.5"/>
+  </g>
+
+  <!-- Alternate gear — hollow cog with R center -->
+  <g transform="translate(392, 392)">
+    <!-- Outer gear shape built from a circle + teeth as a path -->
+    <g fill="none" stroke="#F5F0EB" stroke-width="3.5" opacity="0.4">
+      <!-- Main ring -->
+      <circle cx="0" cy="0" r="20"/>
+      <!-- 8 gear teeth as short outward lines -->
+      <line x1="0" y1="-20" x2="0" y2="-28"/>
+      <line x1="14.1" y1="-14.1" x2="19.8" y2="-19.8"/>
+      <line x1="20" y1="0" x2="28" y2="0"/>
+      <line x1="14.1" y1="14.1" x2="19.8" y2="19.8"/>
+      <line x1="0" y1="20" x2="0" y2="28"/>
+      <line x1="-14.1" y1="14.1" x2="-19.8" y2="19.8"/>
+      <line x1="-20" y1="0" x2="-28" y2="0"/>
+      <line x1="-14.1" y1="-14.1" x2="-19.8" y2="-19.8"/>
+    </g>
+    <!-- Inner hub circle -->
+    <circle cx="0" cy="0" r="8" fill="none" stroke="#F5F0EB" stroke-width="2.5" opacity="0.35"/>
+    <!-- Tiny center dot -->
+    <circle cx="0" cy="0" r="2.5" fill="#F5F0EB" opacity="0.35"/>
+  </g>
+</svg>
