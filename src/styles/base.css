@@ -76,12 +76,11 @@ button:focus-visible,
 html {
   height: 100%;
   overflow: hidden;
-  opacity: 0;
   transition: opacity 0.12s ease-out;
 }
 
 html.ready {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 body, #root {
