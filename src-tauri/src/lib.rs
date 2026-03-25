@@ -43,6 +43,7 @@ pub fn run() {
             commands::markdown::parse_markdown,
             commands::config::get_config,
             commands::config::save_config_cmd,
+            commands::config::open_settings,
             commands::export::export_file,
             watch_folder,
         ])
