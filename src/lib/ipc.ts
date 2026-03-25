@@ -58,6 +58,8 @@ export interface AppConfig {
   theme: { active: string; overrides: { colors: Record<string, string>; typography: Record<string, string>; spacing: Record<string, string> } };
   editor_mode: string;
   nav_mode: string;
+  editor_font: string;
+  line_height: number;
   rendering: { render_math: boolean; render_diagrams: boolean; render_frontmatter: boolean; show_line_numbers: boolean; render_wikilinks: boolean };
   recent_folders: string[];
 }
@@ -95,4 +97,16 @@ export interface SearchResult {
 
 export async function searchFiles(root: string, query: string): Promise<SearchResult[]> {
   return invoke<SearchResult[]>("search_files", { root, query });
+}
+
+export async function openSettings(): Promise<void> {
+  return invoke("open_settings");
+}
+
+export function onConfigChanged(
+  callback: (config: AppConfig) => void,
+): Promise<() => void> {
+  return listen<AppConfig>("config-changed", (event) => {
+    callback(event.payload);
+  });
 }
