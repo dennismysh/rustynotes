@@ -2,6 +2,7 @@ import { Component, Show, onMount, onCleanup } from "solid-js";
 import { appState, type EditorMode, type NavMode } from "../../lib/state";
 import { saveConfig, type AppConfig } from "../../lib/ipc";
 import { applyTheme, resolveTheme } from "../../lib/theme";
+import { resetOnboarding } from "../../lib/onboarding";
 
 const SettingsPanel: Component = () => {
   const { appConfig, setAppConfig, showSettings, setShowSettings, editorMode, setEditorMode, navMode, setNavMode } = appState;
@@ -231,6 +232,18 @@ const SettingsPanel: Component = () => {
                   aria-labelledby="label-wikilinks"
                 >
                   <span class="toggle-knob" />
+                </button>
+              </div>
+            </div>
+            <div class="settings-section">
+              <h3>Onboarding</h3>
+              <div class="setting-row">
+                <label>Show tips again</label>
+                <button
+                  class="settings-reset-btn"
+                  onClick={() => { resetOnboarding(); setShowSettings(false); }}
+                >
+                  Reset
                 </button>
               </div>
             </div>

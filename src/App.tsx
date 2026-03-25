@@ -9,9 +9,12 @@ import WysiwygEditor from "./components/editor/WysiwygEditor";
 import SplitPane from "./components/editor/SplitPane";
 import Preview from "./components/preview/Preview";
 import SettingsPanel from "./components/settings/SettingsPanel";
+import WelcomeEmptyState from "./components/onboarding/WelcomeEmptyState";
+import FeatureTip from "./components/onboarding/FeatureTip";
 import { appState, type EditorMode } from "./lib/state";
 import { getConfig, saveConfig, openFolderDialog, listDirectory, watchFolder, type AppConfig } from "./lib/ipc";
 import { applyTheme, resolveTheme } from "./lib/theme";
+import { markWelcomed } from "./lib/onboarding";
 import "./styles/base.css";
 
 const modes: EditorMode[] = ["source", "wysiwyg", "split", "preview"];
@@ -88,8 +91,9 @@ const App: Component = () => {
         setEditorMode(mode);
       }
 
-      // Reopen last folder
+      // Reopen last folder (returning user)
       if (config.recent_folders.length > 0) {
+        markWelcomed();
         try {
           await openFolder(config.recent_folders[0]);
         } catch (e) {
@@ -148,30 +152,30 @@ const App: Component = () => {
               <Show
                 when={currentFolder()}
                 fallback={
-                  <>
-                    <h1 class="empty-state-title">RustyNotes</h1>
-                    <p class="hint">
-                      A local-first markdown editor with WYSIWYG editing, LaTeX math, Mermaid diagrams, and syntax-highlighted code.
-                    </p>
-                    <button class="empty-state-cta" onClick={handleOpenFolder}>
-                      Open Folder
-                    </button>
-                    <div class="empty-state-shortcuts">
-                      <div class="shortcut-row"><kbd>{mod}K</kbd> <span>Search files</span></div>
-                      <div class="shortcut-row"><kbd>{mod}E</kbd> <span>Switch editor mode</span></div>
-                      <div class="shortcut-row"><kbd>{mod}S</kbd> <span>Save file</span></div>
-                    </div>
-                  </>
+                  <WelcomeEmptyState
+                    onOpenFolder={handleOpenFolder}
+                    onOpenRecent={openFolder}
+                  />
                 }
               >
                 <h1 class="empty-state-title">Select a file</h1>
                 <p class="hint">
                   Choose a markdown file from the sidebar, or press <kbd>{mod}K</kbd> to search.
                 </p>
+                <FeatureTip
+                  id="nav-modes"
+                  message="Try different navigation styles."
+                  shortcut={`${mod}1/2/3`}
+                />
               </Show>
             </div>
           }
         >
+          <FeatureTip
+            id="editor-modes"
+            message="Cycle editor modes: rich text, source, split, preview."
+            shortcut={`${mod}E`}
+          />
           <Show when={editorMode() === "source"}>
             <SourceEditor />
           </Show>
