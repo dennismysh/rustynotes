@@ -10,8 +10,8 @@ import SplitPane from "./components/editor/SplitPane";
 import Preview from "./components/preview/Preview";
 import WelcomeEmptyState from "./components/onboarding/WelcomeEmptyState";
 import FeatureTip from "./components/onboarding/FeatureTip";
-import { appState, type EditorMode } from "./lib/state";
-import { getConfig, saveConfig, openFolderDialog, listDirectory, watchFolder, type AppConfig } from "./lib/ipc";
+import { appState, type EditorMode, type NavMode } from "./lib/state";
+import { getConfig, saveConfig, openFolderDialog, listDirectory, watchFolder, onConfigChanged, openSettings, type AppConfig } from "./lib/ipc";
 import { applyTheme, resolveTheme } from "./lib/theme";
 import { markWelcomed } from "./lib/onboarding";
 import "./styles/base.css";
@@ -99,6 +99,23 @@ const App: Component = () => {
           console.error("Failed to reopen folder:", e);
         }
       }
+
+      // Listen for config changes from settings window
+      await onConfigChanged((config) => {
+        setAppConfig(config);
+        setEditorMode(config.editor_mode as EditorMode);
+        setNavMode(config.nav_mode as NavMode);
+        applyTheme(resolveTheme(config.theme.active), config.theme.overrides);
+      });
+
+      // Cmd+, keyboard shortcut to open settings
+      const handleKeydown = (e: KeyboardEvent) => {
+        if (e.metaKey && e.key === ",") {
+          e.preventDefault();
+          openSettings();
+        }
+      };
+      document.addEventListener("keydown", handleKeydown);
 
       // Listen for OS theme changes when active === "auto"
       if (config.theme.active === "auto") {

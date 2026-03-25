@@ -1,6 +1,6 @@
 import { Component, Show, createSignal, createMemo } from "solid-js";
 import { appState } from "../lib/state";
-import { openFolderDialog, listDirectory, watchFolder, exportFile, showSaveDialog } from "../lib/ipc";
+import { openFolderDialog, listDirectory, watchFolder, exportFile, showSaveDialog, openSettings } from "../lib/ipc";
 
 const Toolbar: Component = () => {
   const {
@@ -83,7 +83,7 @@ const Toolbar: Component = () => {
       <button class="toolbar-icon-btn" onClick={handleExport} title="Export as HTML">
         &#x21E5;
       </button>
-      <button class="toolbar-icon-btn" onClick={() => {}} title="Settings">
+      <button class="toolbar-icon-btn" onClick={() => openSettings()} title="Settings">
         &#x2699;
       </button>
     </div>
