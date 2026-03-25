@@ -8,7 +8,6 @@ import SourceEditor from "./components/editor/SourceEditor";
 import WysiwygEditor from "./components/editor/WysiwygEditor";
 import SplitPane from "./components/editor/SplitPane";
 import Preview from "./components/preview/Preview";
-import SettingsPanel from "./components/settings/SettingsPanel";
 import WelcomeEmptyState from "./components/onboarding/WelcomeEmptyState";
 import FeatureTip from "./components/onboarding/FeatureTip";
 import { appState, type EditorMode } from "./lib/state";
@@ -190,7 +189,6 @@ const App: Component = () => {
           </Show>
         </Show>
       </div>
-      <SettingsPanel />
     </div>
   );
 };
