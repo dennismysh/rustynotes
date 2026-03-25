@@ -11,6 +11,10 @@ pub struct AppConfig {
     #[serde(default = "default_nav_mode")]
     pub nav_mode: String,
     #[serde(default)]
+    pub editor_font: String,
+    #[serde(default = "default_line_height")]
+    pub line_height: f64,
+    #[serde(default)]
     pub rendering: RenderingToggles,
     #[serde(default)]
     pub recent_folders: Vec<String>,
@@ -52,6 +56,7 @@ fn default_true() -> bool { true }
 fn default_editor_mode() -> String { "wysiwyg".to_string() }
 fn default_nav_mode() -> String { "sidebar".to_string() }
 fn default_active_theme() -> String { "auto".to_string() }
+fn default_line_height() -> f64 { 1.6 }
 
 impl Default for AppConfig {
     fn default() -> Self {
@@ -59,6 +64,8 @@ impl Default for AppConfig {
             theme: ThemeConfig::default(),
             editor_mode: default_editor_mode(),
             nav_mode: default_nav_mode(),
+            editor_font: String::default(),
+            line_height: default_line_height(),
             rendering: RenderingToggles::default(),
             recent_folders: Vec::new(),
         }

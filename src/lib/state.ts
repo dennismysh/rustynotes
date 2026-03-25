@@ -13,7 +13,6 @@ function createAppState() {
   const [isDirty, setIsDirty] = createSignal(false);
   const [renderedHtml, setRenderedHtml] = createSignal<string>("");
   const [appConfig, setAppConfig] = createSignal<AppConfig | null>(null);
-  const [showSettings, setShowSettings] = createSignal(false);
   const [navMode, setNavMode] = createSignal<NavMode>("sidebar");
   const [searchQuery, setSearchQuery] = createSignal("");
   const [showSearch, setShowSearch] = createSignal(false);
@@ -35,8 +34,6 @@ function createAppState() {
     setRenderedHtml,
     appConfig,
     setAppConfig,
-    showSettings,
-    setShowSettings,
     navMode,
     setNavMode,
     searchQuery,

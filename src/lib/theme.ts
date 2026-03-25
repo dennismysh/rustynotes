@@ -24,7 +24,12 @@ export function applyTheme(theme: Theme, overrides?: { colors?: Record<string, s
   }
   for (const [key, value] of Object.entries(theme.spacing)) root.style.setProperty(`--${key}`, value);
   if (overrides?.colors) for (const [k, v] of Object.entries(overrides.colors)) root.style.setProperty(`--${k}`, v);
-  if (overrides?.typography) for (const [k, v] of Object.entries(overrides.typography)) root.style.setProperty(`--${k}`, v);
+  if (overrides?.typography) {
+    const typoMap: Record<string, string> = { "body-font": "--font-body", "body-size": "--font-size", "mono-font": "--font-mono", "line-height": "--line-height" };
+    for (const [k, v] of Object.entries(overrides.typography)) {
+      root.style.setProperty(typoMap[k] ?? `--${k}`, v);
+    }
+  }
   if (overrides?.spacing) for (const [k, v] of Object.entries(overrides.spacing)) root.style.setProperty(`--${k}`, v);
 
   // Sync meta theme-color with the applied theme
