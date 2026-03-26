@@ -6,6 +6,7 @@ use rustynotes_common::{EditorMode, NavMode};
 use crate::components::editor::{SourceEditor, SplitPane, WysiwygEditor};
 use crate::components::navigation::{Breadcrumb, MillerColumns, Sidebar};
 use crate::components::preview::preview::Preview;
+use crate::components::settings::SettingsWindow;
 use crate::components::toolbar::Toolbar;
 use crate::state::{provide_app_state, use_app_state};
 
@@ -59,8 +60,6 @@ fn MainView() -> impl IntoView {
 #[component]
 fn SettingsView() -> impl IntoView {
     view! {
-        <div class="settings-container">
-            <p>"Settings — coming soon"</p>
-        </div>
+        <SettingsWindow />
     }
 }
