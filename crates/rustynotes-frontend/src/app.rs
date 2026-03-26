@@ -5,6 +5,7 @@ use rustynotes_common::NavMode;
 
 use crate::components::navigation::{Breadcrumb, MillerColumns, Sidebar};
 use crate::components::preview::preview::Preview;
+use crate::components::toolbar::Toolbar;
 use crate::state::{provide_app_state, use_app_state};
 
 #[component]
@@ -38,6 +39,7 @@ fn MainView() -> impl IntoView {
 
     view! {
         <div class="app-container">
+            <Toolbar />
             {nav_view}
             <div class="main-content">
                 <Preview />
