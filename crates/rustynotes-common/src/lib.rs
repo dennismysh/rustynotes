@@ -150,19 +150,19 @@ pub struct ThemeData {
 // Serde default helpers
 // ---------------------------------------------------------------------------
 
-fn default_true() -> bool {
+pub fn default_true() -> bool {
     true
 }
-fn default_editor_mode() -> String {
+pub fn default_editor_mode() -> String {
     "wysiwyg".to_string()
 }
-fn default_nav_mode() -> String {
+pub fn default_nav_mode() -> String {
     "sidebar".to_string()
 }
-fn default_active_theme() -> String {
+pub fn default_active_theme() -> String {
     "auto".to_string()
 }
-fn default_line_height() -> f64 {
+pub fn default_line_height() -> f64 {
     1.6
 }
 
