@@ -1,8 +1,9 @@
 use leptos::prelude::*;
 use leptos_router::components::*;
 use leptos_router::path;
-use rustynotes_common::NavMode;
+use rustynotes_common::{EditorMode, NavMode};
 
+use crate::components::editor::{SourceEditor, SplitPane, WysiwygEditor};
 use crate::components::navigation::{Breadcrumb, MillerColumns, Sidebar};
 use crate::components::preview::preview::Preview;
 use crate::components::toolbar::Toolbar;
@@ -37,12 +38,19 @@ fn MainView() -> impl IntoView {
         NavMode::Breadcrumb => view! { <Breadcrumb /> }.into_any(),
     };
 
+    let editor_view = move || match state.editor_mode.get() {
+        EditorMode::Source => view! { <SourceEditor /> }.into_any(),
+        EditorMode::Wysiwyg => view! { <WysiwygEditor /> }.into_any(),
+        EditorMode::Split => view! { <SplitPane /> }.into_any(),
+        EditorMode::Preview => view! { <Preview /> }.into_any(),
+    };
+
     view! {
         <div class="app-container">
             <Toolbar />
             {nav_view}
             <div class="main-content">
-                <Preview />
+                {editor_view}
             </div>
         </div>
     }
