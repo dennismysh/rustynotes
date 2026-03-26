@@ -1,3 +1,5 @@
+mod tauri_ipc;
+
 use leptos::prelude::*;
 
 fn main() {
