@@ -1,4 +1,5 @@
 mod bridge;
+mod components;
 mod state;
 mod tauri_ipc;
 mod theme;
