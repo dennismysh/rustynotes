@@ -1,94 +1,17 @@
-use serde::{Deserialize, Serialize};
+pub use rustynotes_common::{AppConfig, RenderingToggles, ThemeConfig, ThemeOverrides};
+
 use std::fs;
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AppConfig {
-    #[serde(default)]
-    pub theme: ThemeConfig,
-    #[serde(default = "default_editor_mode")]
-    pub editor_mode: String,
-    #[serde(default = "default_nav_mode")]
-    pub nav_mode: String,
-    #[serde(default)]
-    pub editor_font: String,
-    #[serde(default = "default_line_height")]
-    pub line_height: f64,
-    #[serde(default)]
-    pub rendering: RenderingToggles,
-    #[serde(default)]
-    pub recent_folders: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ThemeConfig {
-    #[serde(default = "default_active_theme")]
-    pub active: String,
-    #[serde(default)]
-    pub overrides: ThemeOverrides,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct ThemeOverrides {
-    #[serde(default)]
-    pub colors: std::collections::HashMap<String, String>,
-    #[serde(default)]
-    pub typography: std::collections::HashMap<String, String>,
-    #[serde(default)]
-    pub spacing: std::collections::HashMap<String, String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RenderingToggles {
-    #[serde(default = "default_true")]
-    pub render_math: bool,
-    #[serde(default = "default_true")]
-    pub render_diagrams: bool,
-    #[serde(default = "default_true")]
-    pub render_frontmatter: bool,
-    #[serde(default = "default_true")]
-    pub show_line_numbers: bool,
-    #[serde(default = "default_true")]
-    pub render_wikilinks: bool,
-}
-
-fn default_true() -> bool { true }
-fn default_editor_mode() -> String { "wysiwyg".to_string() }
-fn default_nav_mode() -> String { "sidebar".to_string() }
-fn default_active_theme() -> String { "auto".to_string() }
-fn default_line_height() -> f64 { 1.6 }
-
-impl Default for AppConfig {
-    fn default() -> Self {
-        Self {
-            theme: ThemeConfig::default(),
-            editor_mode: default_editor_mode(),
-            nav_mode: default_nav_mode(),
-            editor_font: String::default(),
-            line_height: default_line_height(),
-            rendering: RenderingToggles::default(),
-            recent_folders: Vec::new(),
-        }
-    }
-}
-
-impl Default for ThemeConfig {
-    fn default() -> Self {
-        Self { active: default_active_theme(), overrides: ThemeOverrides::default() }
-    }
-}
-
-impl Default for RenderingToggles {
-    fn default() -> Self {
-        Self { render_math: true, render_diagrams: true, render_frontmatter: true, show_line_numbers: true, render_wikilinks: true }
-    }
-}
-
 fn config_dir() -> PathBuf {
-    dirs::config_dir().unwrap_or_else(|| PathBuf::from("~/.config")).join("rustynotes")
+    dirs::config_dir()
+        .unwrap_or_else(|| PathBuf::from("~/.config"))
+        .join("rustynotes")
 }
 
-fn config_path() -> PathBuf { config_dir().join("config.json") }
+fn config_path() -> PathBuf {
+    config_dir().join("config.json")
+}
 
 pub fn load_config() -> AppConfig {
     let path = config_path();
@@ -129,7 +52,10 @@ mod tests {
         let json = r##"{"theme":{"active":"dark","overrides":{"colors":{"accent":"#ff0000"}}}}"##;
         let config: AppConfig = serde_json::from_str(json).unwrap();
         assert_eq!(config.theme.active, "dark");
-        assert_eq!(config.theme.overrides.colors.get("accent").unwrap(), "#ff0000");
+        assert_eq!(
+            config.theme.overrides.colors.get("accent").unwrap(),
+            "#ff0000"
+        );
     }
 
     #[test]

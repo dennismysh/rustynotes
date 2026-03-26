@@ -1,13 +1,6 @@
-use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+pub use rustynotes_common::FileNode;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct FileEntry {
-    pub name: String,
-    pub path: PathBuf,
-    pub is_dir: bool,
-    pub children: Option<Vec<FileEntry>>,
-}
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, thiserror::Error)]
 pub enum FsError {
@@ -28,11 +21,11 @@ pub fn write_file_content(path: &Path, content: &str) -> Result<(), FsError> {
     Ok(std::fs::write(path, content)?)
 }
 
-pub fn list_directory(path: &Path) -> Result<Vec<FileEntry>, FsError> {
+pub fn list_directory(path: &Path) -> Result<Vec<FileNode>, FsError> {
     if !path.exists() {
         return Err(FsError::NotFound(path.display().to_string()));
     }
-    let mut entries: Vec<FileEntry> = Vec::new();
+    let mut entries: Vec<FileNode> = Vec::new();
     if let Ok(read_dir) = std::fs::read_dir(path) {
         for entry in read_dir.flatten() {
             let file_type = entry.file_type();
@@ -55,9 +48,9 @@ pub fn list_directory(path: &Path) -> Result<Vec<FileEntry>, FsError> {
                 None
             };
 
-            entries.push(FileEntry {
+            entries.push(FileNode {
                 name,
-                path: entry.path(),
+                path: entry.path().display().to_string(),
                 is_dir,
                 children,
             });
@@ -66,7 +59,9 @@ pub fn list_directory(path: &Path) -> Result<Vec<FileEntry>, FsError> {
 
     // Sort: directories first, then alphabetically
     entries.sort_by(|a, b| {
-        b.is_dir.cmp(&a.is_dir).then(a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+        b.is_dir
+            .cmp(&a.is_dir)
+            .then(a.name.to_lowercase().cmp(&b.name.to_lowercase()))
     });
 
     Ok(entries)

@@ -28,6 +28,7 @@ serde_json = "1"
 walkdir = "2"
 thiserror = "2"
 dirs = "6"
+rustynotes-common = { path = "../crates/rustynotes-common" }
 
 [dev-dependencies]
 tempfile = "3"
