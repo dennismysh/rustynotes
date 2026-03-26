@@ -2,3 +2,23 @@
 name = "rustynotes-frontend"
 version = "0.1.0"
 edition = "2021"
+
+[dependencies]
+rustynotes-common = { path = "../rustynotes-common" }
+leptos = { version = "0.7", features = ["csr"] }
+leptos_router = "0.7"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = [
+    "HtmlElement", "Document", "Window",
+    "CssStyleDeclaration", "MediaQueryList", "Element",
+] }
+js-sys = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde-wasm-bindgen = "0.6"
+gloo-storage = "0.3"
+console_error_panic_hook = "0.1"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
