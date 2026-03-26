@@ -6,7 +6,7 @@ npm install --save-dev \
   codemirror @codemirror/state @codemirror/view @codemirror/lang-markdown \
   @codemirror/commands @codemirror/search @codemirror/theme-one-dark \
   @tiptap/core @tiptap/starter-kit @tiptap/extension-task-list \
-  @tiptap/extension-task-item @tiptap/extension-markdown \
+  @tiptap/extension-task-item @tiptap/markdown \
   katex mermaid esbuild
 
 npx esbuild js/bridge-src.js \

@@ -10,7 +10,7 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
-import { Markdown } from '@tiptap/extension-markdown';
+import { Markdown } from '@tiptap/markdown';
 
 let katexModule = null;
 let mermaidModule = null;
