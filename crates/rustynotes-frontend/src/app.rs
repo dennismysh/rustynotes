@@ -5,6 +5,7 @@ use rustynotes_common::{EditorMode, NavMode};
 
 use crate::components::editor::{SourceEditor, SplitPane, WysiwygEditor};
 use crate::components::navigation::{Breadcrumb, MillerColumns, Sidebar};
+use crate::components::onboarding::WelcomeEmptyState;
 use crate::components::preview::preview::Preview;
 use crate::components::settings::SettingsWindow;
 use crate::components::toolbar::Toolbar;
@@ -46,13 +47,20 @@ fn MainView() -> impl IntoView {
         EditorMode::Preview => view! { <Preview /> }.into_any(),
     };
 
+    let has_folder = move || state.current_folder.get().is_some();
+
     view! {
         <div class="app-container">
             <Toolbar />
-            {nav_view}
-            <div class="main-content">
-                {editor_view}
-            </div>
+            <Show
+                when=has_folder
+                fallback=|| view! { <WelcomeEmptyState /> }
+            >
+                {nav_view}
+                <div class="main-content">
+                    {editor_view}
+                </div>
+            </Show>
         </div>
     }
 }
