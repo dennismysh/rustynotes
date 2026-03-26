@@ -1,9 +1,11 @@
 use leptos::prelude::*;
 use leptos_router::components::*;
 use leptos_router::path;
+use rustynotes_common::NavMode;
 
+use crate::components::navigation::{Breadcrumb, MillerColumns, Sidebar};
 use crate::components::preview::preview::Preview;
-use crate::state::provide_app_state;
+use crate::state::{provide_app_state, use_app_state};
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -26,8 +28,17 @@ pub fn App() -> impl IntoView {
 
 #[component]
 fn MainView() -> impl IntoView {
+    let state = use_app_state();
+
+    let nav_view = move || match state.nav_mode.get() {
+        NavMode::Sidebar => view! { <Sidebar /> }.into_any(),
+        NavMode::Miller => view! { <MillerColumns /> }.into_any(),
+        NavMode::Breadcrumb => view! { <Breadcrumb /> }.into_any(),
+    };
+
     view! {
         <div class="app-container">
+            {nav_view}
             <div class="main-content">
                 <Preview />
             </div>
