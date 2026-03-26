@@ -34,7 +34,7 @@ pub fn open_settings(app: AppHandle) -> Result<(), String> {
     }
 
     // Create new settings window
-    WebviewWindowBuilder::new(&app, "settings", tauri::WebviewUrl::App("index.html#/settings".into()))
+    WebviewWindowBuilder::new(&app, "settings", tauri::WebviewUrl::App("/settings".into()))
         .title("Settings")
         .inner_size(700.0, 500.0)
         .min_inner_size(500.0, 350.0)
