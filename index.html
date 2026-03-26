@@ -1,17 +1,17 @@
-<!doctype html>
-<html lang="en">
-  <head>
+<!DOCTYPE html>
+<html>
+<head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f5f5f7" />
-    <link rel="icon" type="image/svg+xml" href="/src/assets/logo.svg" />
+    <meta name="theme-color" content="#1e1e2e" />
     <title>RustyNotes</title>
-  </head>
-
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-
-    <script src="/src/index.tsx" type="module"></script>
-  </body>
+    <link data-trunk rel="css" href="styles/base.css" />
+    <link data-trunk rel="css" href="styles/settings.css" />
+    <link data-trunk rel="css" href="styles/katex.min.css" />
+    <link data-trunk rel="copy-dir" href="styles/themes" />
+    <link data-trunk rel="copy-file" href="js/bridge.bundle.js" />
+    <link data-trunk rel="rust" href="crates/rustynotes-frontend" data-wasm-opt="z" />
+    <script type="module" src="bridge.bundle.js"></script>
+</head>
+<body></body>
 </html>

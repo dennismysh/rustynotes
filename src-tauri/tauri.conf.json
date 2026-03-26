@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.dennis.rustynotes",
   "build": {
-    "beforeDevCommand": "pnpm dev",
+    "beforeDevCommand": "trunk serve --port 1420",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "pnpm build",
+    "beforeBuildCommand": "trunk build --release",
     "frontendDist": "../dist"
   },
   "app": {

@@ -1,14 +1,8 @@
 use super::CommandError;
-use crate::fs_ops::{self, FileEntry};
+use crate::fs_ops::{self, FileNode};
+use rustynotes_common::SearchResult;
 use std::path::Path;
 use walkdir::WalkDir;
-
-#[derive(serde::Serialize)]
-pub struct SearchResult {
-    pub path: String,
-    pub name: String,
-    pub context: String,
-}
 
 #[tauri::command]
 pub fn read_file(path: String) -> Result<String, CommandError> {
@@ -24,7 +18,7 @@ pub fn write_file(path: String, content: String) -> Result<(), CommandError> {
 }
 
 #[tauri::command]
-pub fn list_directory(path: String) -> Result<Vec<FileEntry>, CommandError> {
+pub fn list_directory(path: String) -> Result<Vec<FileNode>, CommandError> {
     Ok(fs_ops::list_directory(std::path::Path::new(&path))?)
 }
 

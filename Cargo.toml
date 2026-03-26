@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "crates/rustynotes-common",
+    "crates/rustynotes-frontend",
+    "src-tauri",
+]
+resolver = "2"
