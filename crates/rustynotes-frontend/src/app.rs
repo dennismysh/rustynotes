@@ -12,6 +12,7 @@ use crate::components::toolbar::Toolbar;
 use crate::save;
 use crate::state::{provide_app_state, use_app_state};
 use crate::state::SaveStatus;
+use crate::tauri_ipc;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -37,6 +38,32 @@ fn MainView() -> impl IntoView {
     let state = use_app_state();
     // Initialize save handlers (keyboard shortcuts, auto-save timer, focus-loss)
     save::init_save_handlers(&state);
+
+    // Load config on mount and listen for changes from settings window
+    {
+        let state = state.clone();
+        Effect::new(move |_| {
+            let state = state.clone();
+            leptos::task::spawn_local(async move {
+                match tauri_ipc::get_config().await {
+                    Ok(config) => {
+                        state.app_config.set(Some(config));
+                    }
+                    Err(e) => {
+                        web_sys::console::error_1(&format!("get_config: {e}").into());
+                    }
+                }
+            });
+        });
+    }
+
+    // Listen for config changes from settings window
+    {
+        let state = state.clone();
+        tauri_ipc::listen_config_changed(move |config| {
+            state.app_config.set(Some(config));
+        });
+    }
 
     let nav_view = move || match state.nav_mode.get() {
         NavMode::Sidebar => view! { <Sidebar /> }.into_any(),
