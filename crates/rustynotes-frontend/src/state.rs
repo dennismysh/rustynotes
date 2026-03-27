@@ -1,6 +1,14 @@
 use leptos::prelude::*;
 use rustynotes_common::{AppConfig, EditorMode, FileNode, NavMode};
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum SaveStatus {
+    Idle,
+    Saving,
+    Saved,
+    Error(String),
+}
+
 #[derive(Clone)]
 pub struct AppState {
     pub current_folder: RwSignal<Option<String>>,
@@ -14,6 +22,10 @@ pub struct AppState {
     pub nav_mode: RwSignal<NavMode>,
     pub search_query: RwSignal<String>,
     pub show_search: RwSignal<bool>,
+    // Save-related state
+    pub save_status: RwSignal<SaveStatus>,
+    pub last_save_timestamp: RwSignal<Option<f64>>,
+    pub pending_file_switch: RwSignal<Option<String>>,
 }
 
 impl AppState {
@@ -30,6 +42,9 @@ impl AppState {
             nav_mode: RwSignal::new(NavMode::Sidebar),
             search_query: RwSignal::new(String::new()),
             show_search: RwSignal::new(false),
+            save_status: RwSignal::new(SaveStatus::Idle),
+            last_save_timestamp: RwSignal::new(None),
+            pending_file_switch: RwSignal::new(None),
         }
     }
 }
