@@ -97,6 +97,7 @@ fn init_keyboard_shortcuts(state: &AppState) {
                 state.active_file_content.set(String::new());
                 state.is_dirty.set(false);
                 state.save_status.set(SaveStatus::Idle);
+                state.rendered_html.set(String::new());
             }
             _ => {}
         }
