@@ -11,6 +11,7 @@ use crate::components::settings::SettingsWindow;
 use crate::components::toolbar::Toolbar;
 use crate::save;
 use crate::state::{provide_app_state, use_app_state};
+use crate::state::SaveStatus;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -62,6 +63,63 @@ fn MainView() -> impl IntoView {
                 {nav_view}
                 <div class="main-content">
                     {editor_view}
+                </div>
+            </Show>
+            // Save-before-switch prompt
+            <Show when=move || state.pending_file_switch.get().is_some()>
+                <div class="modal-overlay">
+                    <div class="modal-dialog">
+                        <p>"You have unsaved changes"</p>
+                        <div class="modal-actions">
+                            <button
+                                class="modal-btn primary"
+                                on:click={
+                                    let state = state.clone();
+                                    move |_| {
+                                        let pending = state.pending_file_switch.get_untracked();
+                                        state.pending_file_switch.set(None);
+                                        if let Some(path) = pending {
+                                            let state = state.clone();
+                                            leptos::task::spawn_local(async move {
+                                                save::perform_save(&state).await;
+                                                save::load_file(&state, path);
+                                            });
+                                        }
+                                    }
+                                }
+                            >
+                                "Save"
+                            </button>
+                            <button
+                                class="modal-btn"
+                                on:click={
+                                    let state = state.clone();
+                                    move |_| {
+                                        let pending = state.pending_file_switch.get_untracked();
+                                        state.pending_file_switch.set(None);
+                                        state.is_dirty.set(false);
+                                        state.save_status.set(SaveStatus::Idle);
+                                        if let Some(path) = pending {
+                                            save::load_file(&state, path);
+                                        }
+                                    }
+                                }
+                            >
+                                "Discard"
+                            </button>
+                            <button
+                                class="modal-btn"
+                                on:click={
+                                    let state = state.clone();
+                                    move |_| {
+                                        state.pending_file_switch.set(None);
+                                    }
+                                }
+                            >
+                                "Cancel"
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </Show>
         </div>
