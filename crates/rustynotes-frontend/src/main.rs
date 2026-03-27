@@ -1,6 +1,7 @@
 mod app;
 mod bridge;
 mod components;
+mod save;
 mod state;
 mod tauri_ipc;
 mod theme;
