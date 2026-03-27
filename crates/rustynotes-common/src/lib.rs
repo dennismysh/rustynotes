@@ -77,6 +77,30 @@ impl std::fmt::Display for NavMode {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum SaveMode {
+    Manual,
+    AfterDelay,
+    OnFocusLoss,
+}
+
+impl Default for SaveMode {
+    fn default() -> Self {
+        Self::Manual
+    }
+}
+
+impl std::fmt::Display for SaveMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Manual => write!(f, "manual"),
+            Self::AfterDelay => write!(f, "after_delay"),
+            Self::OnFocusLoss => write!(f, "on_focus_loss"),
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Configuration types
 // ---------------------------------------------------------------------------
@@ -97,6 +121,10 @@ pub struct AppConfig {
     pub rendering: RenderingToggles,
     #[serde(default)]
     pub recent_folders: Vec<String>,
+    #[serde(default)]
+    pub save_mode: SaveMode,
+    #[serde(default = "default_auto_save_delay_ms")]
+    pub auto_save_delay_ms: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -165,6 +193,9 @@ pub fn default_active_theme() -> String {
 pub fn default_line_height() -> f64 {
     1.6
 }
+pub fn default_auto_save_delay_ms() -> u64 {
+    1000
+}
 
 // ---------------------------------------------------------------------------
 // Default impls
@@ -180,6 +211,8 @@ impl Default for AppConfig {
             line_height: default_line_height(),
             rendering: RenderingToggles::default(),
             recent_folders: Vec::new(),
+            save_mode: SaveMode::default(),
+            auto_save_delay_ms: default_auto_save_delay_ms(),
         }
     }
 }
@@ -348,6 +381,35 @@ mod tests {
         let json = serde_json::to_string(&theme).unwrap();
         let parsed: ThemeData = serde_json::from_str(&json).unwrap();
         assert_eq!(theme, parsed);
+    }
+
+    #[test]
+    fn test_save_mode_serde() {
+        let mode = SaveMode::AfterDelay;
+        let json = serde_json::to_string(&mode).unwrap();
+        assert_eq!(json, "\"after_delay\"");
+        let parsed: SaveMode = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, SaveMode::AfterDelay);
+    }
+
+    #[test]
+    fn test_save_mode_default() {
+        assert_eq!(SaveMode::default(), SaveMode::Manual);
+    }
+
+    #[test]
+    fn test_config_save_mode_defaults() {
+        let config: AppConfig = serde_json::from_str("{}").unwrap();
+        assert_eq!(config.save_mode, SaveMode::Manual);
+        assert_eq!(config.auto_save_delay_ms, 1000);
+    }
+
+    #[test]
+    fn test_config_with_save_mode() {
+        let json = r#"{"save_mode":"after_delay","auto_save_delay_ms":2000}"#;
+        let config: AppConfig = serde_json::from_str(json).unwrap();
+        assert_eq!(config.save_mode, SaveMode::AfterDelay);
+        assert_eq!(config.auto_save_delay_ms, 2000);
     }
 
     #[test]
