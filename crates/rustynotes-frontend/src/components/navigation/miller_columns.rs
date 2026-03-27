@@ -4,8 +4,8 @@ use web_sys::KeyboardEvent;
 
 use wasm_bindgen::prelude::*;
 
-use crate::state::use_app_state;
-use crate::tauri_ipc;
+use crate::save;
+use crate::state::{use_app_state, AppState};
 
 /// Schedule a callback on the next animation frame.
 fn request_animation_frame(f: impl FnOnce() + 'static) {
@@ -50,6 +50,47 @@ fn filter_md_entries(entries: &[FileNode]) -> Vec<FileNode> {
 }
 
 // ---------------------------------------------------------------------------
+// Entry-click helper (free function so it can be called from both the click
+// and keydown handlers without needing Rc/Arc or closure sharing).
+// All signal args are Copy; AppState is passed by reference.
+// ---------------------------------------------------------------------------
+
+fn do_entry_click(
+    entry: FileNode,
+    col_index: usize,
+    columns: RwSignal<Vec<Vec<FileNode>>>,
+    selected_paths: RwSignal<Vec<Option<String>>>,
+    state: &AppState,
+) {
+    if entry.is_dir {
+        columns.update(|cols| {
+            cols.truncate(col_index + 1);
+            if let Some(ref children) = entry.children {
+                if !children.is_empty() {
+                    cols.push(children.clone());
+                }
+            }
+        });
+        selected_paths.update(|sp| {
+            sp.truncate(col_index + 1);
+            sp[col_index] = Some(entry.path.clone());
+            if entry.children.as_ref().map(|c| !c.is_empty()).unwrap_or(false) {
+                sp.push(None);
+            }
+        });
+    } else {
+        selected_paths.update(|sp| {
+            sp.truncate(col_index + 1);
+            sp[col_index] = Some(entry.path.clone());
+        });
+        columns.update(|cols| {
+            cols.truncate(col_index + 1);
+        });
+        save::guard_file_switch(state, entry.path.clone());
+    }
+}
+
+// ---------------------------------------------------------------------------
 // MillerColumns component
 // ---------------------------------------------------------------------------
 
@@ -60,7 +101,13 @@ pub fn MillerColumns() -> impl IntoView {
     let columns: RwSignal<Vec<Vec<FileNode>>> = RwSignal::new(Vec::new());
     let selected_paths: RwSignal<Vec<Option<String>>> = RwSignal::new(Vec::new());
 
-    let md_tree = Memo::new(move |_| filter_md_entries(&state.file_tree.get()));
+    // Extract Copy fields before closures so each closure captures only what it needs.
+    // RwSignal is Copy. AppState is Clone (cheap – just copies signal handles).
+    let file_tree = state.file_tree;
+    let active_file_path = state.active_file_path;
+    let current_folder = state.current_folder;
+
+    let md_tree = Memo::new(move |_| filter_md_entries(&file_tree.get()));
 
     // Re-initialize columns when the file tree changes
     Effect::new(move || {
@@ -74,136 +121,14 @@ pub fn MillerColumns() -> impl IntoView {
         }
     });
 
-    let handle_click = move |entry: FileNode, col_index: usize| {
-        if entry.is_dir {
-            // Keep columns 0..=col_index, add children as next column
-            columns.update(|cols| {
-                cols.truncate(col_index + 1);
-                if let Some(ref children) = entry.children {
-                    if !children.is_empty() {
-                        cols.push(children.clone());
-                    }
-                }
-            });
-            selected_paths.update(|sp| {
-                sp.truncate(col_index + 1);
-                sp[col_index] = Some(entry.path.clone());
-                if entry
-                    .children
-                    .as_ref()
-                    .map(|c| !c.is_empty())
-                    .unwrap_or(false)
-                {
-                    sp.push(None);
-                }
-            });
-        } else {
-            // Select this file, trim columns after
-            selected_paths.update(|sp| {
-                sp.truncate(col_index + 1);
-                sp[col_index] = Some(entry.path.clone());
-            });
-            columns.update(|cols| {
-                cols.truncate(col_index + 1);
-            });
-
-            // Open the file
-            let path = entry.path.clone();
-            state.active_file_path.set(Some(path.clone()));
-            leptos::task::spawn_local(async move {
-                match tauri_ipc::read_file(&path).await {
-                    Ok(content) => {
-                        state.active_file_content.set(content);
-                        state.is_dirty.set(false);
-                    }
-                    Err(e) => {
-                        web_sys::console::error_1(
-                            &format!("Failed to read file: {e}").into(),
-                        );
-                    }
-                }
-            });
-        }
-    };
-
-    let handle_item_keydown =
-        move |ev: KeyboardEvent, entry: FileNode, col_index: usize| {
-            let key = ev.key();
-
-            if key == "Enter" || key == " " {
-                ev.prevent_default();
-                handle_click(entry, col_index);
-                return;
-            }
-            if key == "ArrowDown" {
-                ev.prevent_default();
-                if let Some(target) = ev.current_target() {
-                    let el: web_sys::HtmlElement = target.unchecked_into();
-                    if let Some(next) = el.next_element_sibling() {
-                        let _ = next.unchecked_into::<web_sys::HtmlElement>().focus();
-                    }
-                }
-            }
-            if key == "ArrowUp" {
-                ev.prevent_default();
-                if let Some(target) = ev.current_target() {
-                    let el: web_sys::HtmlElement = target.unchecked_into();
-                    if let Some(prev) = el.previous_element_sibling() {
-                        let _ = prev.unchecked_into::<web_sys::HtmlElement>().focus();
-                    }
-                }
-            }
-            if key == "ArrowRight" && entry.is_dir {
-                ev.prevent_default();
-                handle_click(entry, col_index);
-                // Focus first item in next column after render
-                let next_col = col_index + 1;
-                // Use request_animation_frame to wait for the DOM update
-                request_animation_frame(move || {
-                    if let Some(document) = web_sys::window().and_then(|w| w.document()) {
-                        if let Ok(cols) = document.query_selector_all(".miller-column") {
-                            if let Some(next_col_el) = cols.item(next_col as u32) {
-                                if let Ok(Some(first_item)) = next_col_el
-                                    .unchecked_into::<web_sys::Element>()
-                                    .query_selector("[tabindex='0']")
-                                {
-                                    let _ = first_item
-                                        .unchecked_into::<web_sys::HtmlElement>()
-                                        .focus();
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-            if key == "ArrowLeft" && col_index > 0 {
-                ev.prevent_default();
-                let prev_col = col_index - 1;
-                if let Some(document) = web_sys::window().and_then(|w| w.document()) {
-                    if let Ok(cols) = document.query_selector_all(".miller-column") {
-                        if let Some(prev_col_el) = cols.item(prev_col as u32) {
-                            let prev_el: web_sys::Element = prev_col_el.unchecked_into();
-                            let active_item = prev_el
-                                .query_selector(".miller-item.active")
-                                .ok()
-                                .flatten()
-                                .or_else(|| {
-                                    prev_el.query_selector("[tabindex='0']").ok().flatten()
-                                });
-                            if let Some(item) = active_item {
-                                let _ =
-                                    item.unchecked_into::<web_sys::HtmlElement>().focus();
-                            }
-                        }
-                    }
-                }
-            }
-        };
+    // StoredValue<AppState> is Copy, so it can be captured by multiple closures
+    // (e.g. on:click and on:keydown) inside the For children without moving AppState.
+    let state_sv = StoredValue::new(state);
 
     view! {
         <div class="sidebar">
             <Show
-                when=move || state.current_folder.get().is_some()
+                when=move || current_folder.get().is_some()
                 fallback=|| view! {
                     <div style="padding: 16px; color: var(--text-muted); font-size: 13px; text-align: center;">
                         "No folder open"
@@ -237,8 +162,7 @@ pub fn MillerColumns() -> impl IntoView {
                                                     .get(col_index)
                                                     .and_then(|s| s.as_deref())
                                                     == Some(entry_path_for_active.as_str());
-                                                let active_match = state
-                                                    .active_file_path
+                                                let active_match = active_file_path
                                                     .get()
                                                     .as_deref()
                                                     == Some(entry_path_for_active.as_str());
@@ -256,14 +180,93 @@ pub fn MillerColumns() -> impl IntoView {
                                                     class="miller-item"
                                                     class:active=move || is_active.get()
                                                     on:click=move |_| {
-                                                        handle_click(entry_for_click.clone(), col_index);
-                                                    }
-                                                    on:keydown=move |ev| {
-                                                        handle_item_keydown(
-                                                            ev,
-                                                            entry_for_key.clone(),
+                                                        state_sv.with_value(|s| do_entry_click(
+                                                            entry_for_click.clone(),
                                                             col_index,
-                                                        );
+                                                            columns,
+                                                            selected_paths,
+                                                            s,
+                                                        ));
+                                                    }
+                                                    on:keydown=move |ev: KeyboardEvent| {
+                                                        let key = ev.key();
+                                                        if key == "Enter" || key == " " {
+                                                            ev.prevent_default();
+                                                            state_sv.with_value(|s| do_entry_click(
+                                                                entry_for_key.clone(),
+                                                                col_index,
+                                                                columns,
+                                                                selected_paths,
+                                                                s,
+                                                            ));
+                                                            return;
+                                                        }
+                                                        if key == "ArrowDown" {
+                                                            ev.prevent_default();
+                                                            if let Some(target) = ev.current_target() {
+                                                                let el: web_sys::HtmlElement = target.unchecked_into();
+                                                                if let Some(next) = el.next_element_sibling() {
+                                                                    let _ = next.unchecked_into::<web_sys::HtmlElement>().focus();
+                                                                }
+                                                            }
+                                                        }
+                                                        if key == "ArrowUp" {
+                                                            ev.prevent_default();
+                                                            if let Some(target) = ev.current_target() {
+                                                                let el: web_sys::HtmlElement = target.unchecked_into();
+                                                                if let Some(prev) = el.previous_element_sibling() {
+                                                                    let _ = prev.unchecked_into::<web_sys::HtmlElement>().focus();
+                                                                }
+                                                            }
+                                                        }
+                                                        if key == "ArrowRight" && entry_is_dir {
+                                                            ev.prevent_default();
+                                                            state_sv.with_value(|s| do_entry_click(
+                                                                entry_for_key.clone(),
+                                                                col_index,
+                                                                columns,
+                                                                selected_paths,
+                                                                s,
+                                                            ));
+                                                            let next_col = col_index + 1;
+                                                            request_animation_frame(move || {
+                                                                if let Some(document) = web_sys::window().and_then(|w| w.document()) {
+                                                                    if let Ok(cols) = document.query_selector_all(".miller-column") {
+                                                                        if let Some(next_col_el) = cols.item(next_col as u32) {
+                                                                            if let Ok(Some(first_item)) = next_col_el
+                                                                                .unchecked_into::<web_sys::Element>()
+                                                                                .query_selector("[tabindex='0']")
+                                                                            {
+                                                                                let _ = first_item
+                                                                                    .unchecked_into::<web_sys::HtmlElement>()
+                                                                                    .focus();
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            });
+                                                        }
+                                                        if key == "ArrowLeft" && col_index > 0 {
+                                                            ev.prevent_default();
+                                                            let prev_col = col_index - 1;
+                                                            if let Some(document) = web_sys::window().and_then(|w| w.document()) {
+                                                                if let Ok(cols) = document.query_selector_all(".miller-column") {
+                                                                    if let Some(prev_col_el) = cols.item(prev_col as u32) {
+                                                                        let prev_el: web_sys::Element = prev_col_el.unchecked_into();
+                                                                        let active_item = prev_el
+                                                                            .query_selector(".miller-item.active")
+                                                                            .ok()
+                                                                            .flatten()
+                                                                            .or_else(|| {
+                                                                                prev_el.query_selector("[tabindex='0']").ok().flatten()
+                                                                            });
+                                                                        if let Some(item) = active_item {
+                                                                            let _ = item.unchecked_into::<web_sys::HtmlElement>().focus();
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                     tabindex=0
                                                     role="option"

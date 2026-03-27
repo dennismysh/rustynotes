@@ -3,8 +3,8 @@ use rustynotes_common::FileNode;
 use wasm_bindgen::JsCast;
 use web_sys::KeyboardEvent;
 
+use crate::save;
 use crate::state::use_app_state;
-use crate::tauri_ipc;
 
 // ---------------------------------------------------------------------------
 // Filtering helpers
@@ -89,28 +89,16 @@ fn TreeNode(entry: FileNode, depth: usize) -> AnyView {
     let path_for_click = entry_path.clone();
     let path_for_active = entry_path.clone();
 
+    let state_for_click = state.clone();
     let handle_click = move |_| {
         if entry_is_dir {
             expanded.update(|v| *v = !*v);
         } else {
-            let path = path_for_click.clone();
-            state.active_file_path.set(Some(path.clone()));
-            leptos::task::spawn_local(async move {
-                match tauri_ipc::read_file(&path).await {
-                    Ok(content) => {
-                        state.active_file_content.set(content);
-                        state.is_dirty.set(false);
-                    }
-                    Err(e) => {
-                        web_sys::console::error_1(
-                            &format!("Failed to read file: {e}").into(),
-                        );
-                    }
-                }
-            });
+            save::guard_file_switch(&state_for_click, path_for_click.clone());
         }
     };
 
+    let state_for_keydown = state.clone();
     let handle_keydown = move |ev: KeyboardEvent| {
         let key = ev.key();
         if key == "Enter" || key == " " {
@@ -119,21 +107,7 @@ fn TreeNode(entry: FileNode, depth: usize) -> AnyView {
             if entry_is_dir {
                 expanded.update(|v| *v = !*v);
             } else {
-                let path = entry_path.clone();
-                state.active_file_path.set(Some(path.clone()));
-                leptos::task::spawn_local(async move {
-                    match tauri_ipc::read_file(&path).await {
-                        Ok(content) => {
-                            state.active_file_content.set(content);
-                            state.is_dirty.set(false);
-                        }
-                        Err(e) => {
-                            web_sys::console::error_1(
-                                &format!("Failed to read file: {e}").into(),
-                            );
-                        }
-                    }
-                });
+                save::guard_file_switch(&state_for_keydown, entry_path.clone());
             }
         }
         if key == "ArrowRight" && entry_is_dir && !expanded.get_untracked() {

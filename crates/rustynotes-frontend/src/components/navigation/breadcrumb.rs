@@ -3,8 +3,45 @@ use rustynotes_common::FileNode;
 use wasm_bindgen::prelude::*;
 use web_sys::KeyboardEvent;
 
-use crate::state::use_app_state;
+use crate::save;
+use crate::state::{use_app_state, AppState};
 use crate::tauri_ipc;
+
+// ---------------------------------------------------------------------------
+// Dropdown-item click helper (free function).
+// All signal args are Copy; AppState is passed by reference.
+// ---------------------------------------------------------------------------
+
+fn do_dropdown_item_click(
+    entry: FileNode,
+    dropdown_index: RwSignal<Option<i32>>,
+    dropdown_items: RwSignal<Vec<FileNode>>,
+    state: &AppState,
+) {
+    // Close the dropdown
+    dropdown_index.set(None);
+    dropdown_items.set(Vec::new());
+
+    if entry.is_dir {
+        let path = entry.path.clone();
+        let cur_idx = dropdown_index.get_untracked();
+        leptos::task::spawn_local(async move {
+            match tauri_ipc::list_directory(&path).await {
+                Ok(entries) => {
+                    dropdown_items.set(entries);
+                    dropdown_index.set(cur_idx);
+                }
+                Err(e) => {
+                    web_sys::console::error_1(
+                        &format!("Failed to list directory: {e}").into(),
+                    );
+                }
+            }
+        });
+    } else {
+        save::guard_file_switch(state, entry.path.clone());
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Breadcrumb component
@@ -17,10 +54,14 @@ pub fn Breadcrumb() -> impl IntoView {
     let dropdown_items: RwSignal<Vec<FileNode>> = RwSignal::new(Vec::new());
     let dropdown_index: RwSignal<Option<i32>> = RwSignal::new(None);
 
+    // Extract Copy signal fields before closures.
+    let current_folder = state.current_folder;
+    let active_file_path = state.active_file_path;
+
     // Derive path segments from active_file_path relative to current_folder
     let path_segments = Memo::new(move |_| {
-        let folder = state.current_folder.get();
-        let file_path = state.active_file_path.get();
+        let folder = current_folder.get();
+        let file_path = active_file_path.get();
         match (folder, file_path) {
             (Some(folder), Some(file_path)) => {
                 let relative = if file_path.starts_with(&folder) {
@@ -66,7 +107,7 @@ pub fn Breadcrumb() -> impl IntoView {
     handle_global_keydown.forget();
 
     let handle_segment_click = move |segment_index: usize| {
-        let folder = state.current_folder.get_untracked();
+        let folder = current_folder.get_untracked();
         let Some(folder) = folder else { return };
 
         let segments = path_segments.get_untracked();
@@ -97,7 +138,7 @@ pub fn Breadcrumb() -> impl IntoView {
     };
 
     let handle_root_click = move |_| {
-        let folder = state.current_folder.get_untracked();
+        let folder = current_folder.get_untracked();
         let Some(folder) = folder else { return };
 
         leptos::task::spawn_local(async move {
@@ -115,80 +156,18 @@ pub fn Breadcrumb() -> impl IntoView {
         });
     };
 
-    let close_dropdown_for_item = close_dropdown.clone();
-    let handle_dropdown_item_click = move |entry: FileNode| {
-        close_dropdown_for_item();
-
-        if entry.is_dir {
-            let path = entry.path.clone();
-            let cur_idx = dropdown_index.get_untracked();
-            leptos::task::spawn_local(async move {
-                match tauri_ipc::list_directory(&path).await {
-                    Ok(entries) => {
-                        dropdown_items.set(entries);
-                        dropdown_index.set(cur_idx);
-                    }
-                    Err(e) => {
-                        web_sys::console::error_1(
-                            &format!("Failed to list directory: {e}").into(),
-                        );
-                    }
-                }
-            });
-        } else {
-            let path = entry.path.clone();
-            state.active_file_path.set(Some(path.clone()));
-            leptos::task::spawn_local(async move {
-                match tauri_ipc::read_file(&path).await {
-                    Ok(content) => {
-                        state.active_file_content.set(content);
-                        state.is_dirty.set(false);
-                    }
-                    Err(e) => {
-                        web_sys::console::error_1(
-                            &format!("Failed to read file: {e}").into(),
-                        );
-                    }
-                }
-            });
-        }
-    };
-
-    let handle_dropdown_keydown = move |ev: KeyboardEvent, entry: FileNode| {
-        let key = ev.key();
-        if key == "Enter" || key == " " {
-            ev.prevent_default();
-            handle_dropdown_item_click(entry);
-            return;
-        }
-        if key == "ArrowDown" {
-            ev.prevent_default();
-            if let Some(target) = ev.current_target() {
-                let el: web_sys::HtmlElement = target.unchecked_into();
-                if let Some(next) = el.next_element_sibling() {
-                    let _ = next.unchecked_into::<web_sys::HtmlElement>().focus();
-                }
-            }
-        }
-        if key == "ArrowUp" {
-            ev.prevent_default();
-            if let Some(target) = ev.current_target() {
-                let el: web_sys::HtmlElement = target.unchecked_into();
-                if let Some(prev) = el.previous_element_sibling() {
-                    let _ = prev.unchecked_into::<web_sys::HtmlElement>().focus();
-                }
-            }
-        }
-    };
-
     let close_dropdown_for_overlay = close_dropdown.clone();
+
+    // StoredValue<AppState> is Copy, so it can be captured by multiple closures
+    // without moving AppState out of any single closure's environment.
+    let state_sv = StoredValue::new(state);
 
     view! {
         <nav class="breadcrumb-bar" aria-label="File path">
-            <Show when=move || state.current_folder.get().is_some()>
+            <Show when=move || current_folder.get().is_some()>
                 {
                     let root_name = move || {
-                        state.current_folder.get().map(|f| {
+                        current_folder.get().map(|f| {
                             f.split('/').last().unwrap_or(&f).to_string()
                         }).unwrap_or_default()
                     };
@@ -229,7 +208,7 @@ pub fn Breadcrumb() -> impl IntoView {
                 }
             </Show>
 
-            <Show when=move || state.current_folder.get().is_none()>
+            <Show when=move || current_folder.get().is_none()>
                 <span style="color: var(--text-muted); font-size: 13px;">
                     "No folder open"
                 </span>
@@ -260,10 +239,43 @@ pub fn Breadcrumb() -> impl IntoView {
                                 <div
                                     class="breadcrumb-dropdown-item"
                                     on:click=move |_| {
-                                        handle_dropdown_item_click(entry_for_click.clone());
+                                        state_sv.with_value(|s| do_dropdown_item_click(
+                                            entry_for_click.clone(),
+                                            dropdown_index,
+                                            dropdown_items,
+                                            s,
+                                        ));
                                     }
-                                    on:keydown=move |ev| {
-                                        handle_dropdown_keydown(ev, entry_for_key.clone());
+                                    on:keydown=move |ev: KeyboardEvent| {
+                                        let key = ev.key();
+                                        if key == "Enter" || key == " " {
+                                            ev.prevent_default();
+                                            state_sv.with_value(|s| do_dropdown_item_click(
+                                                entry_for_key.clone(),
+                                                dropdown_index,
+                                                dropdown_items,
+                                                s,
+                                            ));
+                                            return;
+                                        }
+                                        if key == "ArrowDown" {
+                                            ev.prevent_default();
+                                            if let Some(target) = ev.current_target() {
+                                                let el: web_sys::HtmlElement = target.unchecked_into();
+                                                if let Some(next) = el.next_element_sibling() {
+                                                    let _ = next.unchecked_into::<web_sys::HtmlElement>().focus();
+                                                }
+                                            }
+                                        }
+                                        if key == "ArrowUp" {
+                                            ev.prevent_default();
+                                            if let Some(target) = ev.current_target() {
+                                                let el: web_sys::HtmlElement = target.unchecked_into();
+                                                if let Some(prev) = el.previous_element_sibling() {
+                                                    let _ = prev.unchecked_into::<web_sys::HtmlElement>().focus();
+                                                }
+                                            }
+                                        }
                                     }
                                     tabindex=0
                                     role="option"

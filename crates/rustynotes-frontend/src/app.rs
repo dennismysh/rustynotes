@@ -9,6 +9,7 @@ use crate::components::onboarding::WelcomeEmptyState;
 use crate::components::preview::preview::Preview;
 use crate::components::settings::SettingsWindow;
 use crate::components::toolbar::Toolbar;
+use crate::save;
 use crate::state::{provide_app_state, use_app_state};
 
 #[component]
@@ -33,6 +34,8 @@ pub fn App() -> impl IntoView {
 #[component]
 fn MainView() -> impl IntoView {
     let state = use_app_state();
+    // Initialize save handlers (keyboard shortcuts, auto-save timer, focus-loss)
+    save::init_save_handlers(&state);
 
     let nav_view = move || match state.nav_mode.get() {
         NavMode::Sidebar => view! { <Sidebar /> }.into_any(),
