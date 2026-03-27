@@ -4,7 +4,7 @@
 use leptos::prelude::*;
 
 use crate::components::settings::categories::{
-    AdvancedSettings, AppearanceSettings, EditorSettings, PreviewSettings,
+    AdvancedSettings, AppearanceSettings, EditorSettings, PreviewSettings, SavingSettings,
 };
 use crate::components::settings::settings_sidebar::{SettingsCategory, SettingsSidebar};
 use crate::tauri_ipc;
@@ -14,6 +14,7 @@ fn categories() -> Vec<SettingsCategory> {
     vec![
         SettingsCategory { id: "appearance", label: "Appearance", icon: "\u{1F3A8}" },
         SettingsCategory { id: "editor",     label: "Editor",     icon: "\u{270F}\u{FE0F}" },
+        SettingsCategory { id: "saving",     label: "Saving",     icon: "\u{1F4BE}" },
         SettingsCategory { id: "preview",    label: "Preview",    icon: "\u{1F441}" },
         SettingsCategory { id: "advanced",   label: "Advanced",   icon: "\u{1F50C}" },
     ]
@@ -50,6 +51,7 @@ pub fn SettingsWindow() -> impl IntoView {
             <main class="settings-detail">
                 {move || match active_category.get().as_str() {
                     "editor"   => view! { <EditorSettings /> }.into_any(),
+                    "saving"   => view! { <SavingSettings /> }.into_any(),
                     "preview"  => view! { <PreviewSettings /> }.into_any(),
                     "advanced" => view! { <AdvancedSettings /> }.into_any(),
                     _          => view! { <AppearanceSettings /> }.into_any(),
