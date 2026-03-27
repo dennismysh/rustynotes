@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::KeyboardEvent;
 
-use crate::state::use_app_state;
+use crate::state::{use_app_state, SaveStatus};
 use crate::tauri_ipc;
 
 // ---------------------------------------------------------------------------
@@ -49,6 +49,7 @@ pub fn Toolbar() -> impl IntoView {
     let active_file_content = state.active_file_content;
     let is_dirty = state.is_dirty;
     let show_search = state.show_search;
+    let save_status = state.save_status;
 
     // Derived: active filename (just the basename, e.g. "notes.md")
     let active_filename = Memo::new(move |_| {
@@ -184,6 +185,20 @@ pub fn Toolbar() -> impl IntoView {
         handler.forget();
     });
 
+    // Reset "Saved" status back to Idle after 1.5s
+    Effect::new(move |_| {
+        if save_status.get() == SaveStatus::Saved {
+            let save_status = save_status;
+            leptos::task::spawn_local(async move {
+                sleep_ms(1500).await;
+                // Only reset if still in Saved state
+                if save_status.get_untracked() == SaveStatus::Saved {
+                    save_status.set(SaveStatus::Idle);
+                }
+            });
+        }
+    });
+
     // ---- search shortcut label ----
 
     let search_shortcut = if is_mac {
@@ -196,16 +211,43 @@ pub fn Toolbar() -> impl IntoView {
         <div class="toolbar">
             <button on:click=handle_open_folder>"Open Folder"</button>
             <div class="spacer" />
-            <Show when=move || active_filename.get().is_some()>
+            <Show when=move || active_filename.get().is_some() || active_file_path.get().is_none()>
                 <div class="toolbar-filename">
-                    <Show when=move || is_dirty.get()>
-                        <span class="dirty-indicator" aria-label="Unsaved changes" />
-                    </Show>
+                    {move || {
+                        let status = save_status.get();
+                        let dirty = is_dirty.get();
+                        match status {
+                            SaveStatus::Saving => {
+                                view! { <span class="save-indicator saving" aria-label="Saving">{"\u{21BB}"}</span> }.into_any()
+                            }
+                            SaveStatus::Saved => {
+                                view! { <span class="save-indicator saved" aria-label="Saved">{"\u{2713}"}</span> }.into_any()
+                            }
+                            SaveStatus::Error(ref msg) => {
+                                let title = msg.clone();
+                                view! { <span class="save-indicator error" title=title aria-label="Save error">{"\u{26A0}"}</span> }.into_any()
+                            }
+                            SaveStatus::Idle if dirty => {
+                                view! { <span class="dirty-indicator" aria-label="Unsaved changes" /> }.into_any()
+                            }
+                            _ => {
+                                view! { <span /> }.into_any()
+                            }
+                        }
+                    }}
                     <span
                         class="toolbar-filename-text"
                         title=move || active_file_path.get().unwrap_or_default()
                     >
-                        {move || active_filename.get().unwrap_or_default()}
+                        {move || {
+                            let name = active_filename.get().unwrap_or_default();
+                            let path = active_file_path.get();
+                            if path.is_none() && name.is_empty() {
+                                "Untitled".to_string()
+                            } else {
+                                name
+                            }
+                        }}
                     </span>
                 </div>
             </Show>
