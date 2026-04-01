@@ -2,7 +2,7 @@
 //! focus-loss handler, and file-switch guard.
 
 use leptos::prelude::*;
-use rustynotes_common::SaveMode;
+use rustynotes_common::{EditorMode, SaveMode};
 use wasm_bindgen::prelude::*;
 use web_sys::KeyboardEvent;
 
@@ -98,6 +98,22 @@ fn init_keyboard_shortcuts(state: &AppState) {
                 state.is_dirty.set(false);
                 state.save_status.set(SaveStatus::Idle);
                 state.rendered_html.set(String::new());
+            }
+            "1" => {
+                ke.prevent_default();
+                state.editor_mode.set(EditorMode::Source);
+            }
+            "2" => {
+                ke.prevent_default();
+                state.editor_mode.set(EditorMode::Wysiwyg);
+            }
+            "3" => {
+                ke.prevent_default();
+                state.editor_mode.set(EditorMode::Split);
+            }
+            "4" => {
+                ke.prevent_default();
+                state.editor_mode.set(EditorMode::Preview);
             }
             _ => {}
         }
@@ -223,6 +239,10 @@ pub fn guard_file_switch(state: &AppState, pending_path: String) {
 /// Load a file by path into the editor state.
 pub fn load_file(state: &AppState, path: String) {
     state.active_file_path.set(Some(path.clone()));
+    // Suppress dirty flag while the editor processes the new content.
+    // TipTap normalizes markdown on parse, which fires onChange even though
+    // the user didn't edit anything.
+    state.suppress_dirty.set(true);
     let state = state.clone();
     leptos::task::spawn_local(async move {
         match tauri_ipc::read_file(&path).await {
@@ -235,5 +255,11 @@ pub fn load_file(state: &AppState, path: String) {
                 web_sys::console::error_1(&format!("Failed to read file: {e}").into());
             }
         }
+        // Clear suppression after a short delay to let the editor's onChange settle.
+        let state2 = state.clone();
+        gloo_timers::callback::Timeout::new(100, move || {
+            state2.suppress_dirty.set(false);
+        })
+        .forget();
     });
 }

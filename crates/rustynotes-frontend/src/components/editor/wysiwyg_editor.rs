@@ -14,6 +14,7 @@ pub fn WysiwygEditor() -> impl IntoView {
     let content_signal = state.active_file_content;
     let dirty_signal = state.is_dirty;
     let rendered_html_signal = state.rendered_html;
+    let suppress_dirty = state.suppress_dirty;
 
     let container = NodeRef::<leptos::html::Div>::new();
 
@@ -28,7 +29,9 @@ pub fn WysiwygEditor() -> impl IntoView {
         if let Some(el) = container.get() {
             let cb = Closure::wrap(Box::new(move |new_content: String| {
                 content_signal.set(new_content.clone());
-                dirty_signal.set(true);
+                if !suppress_dirty.get_untracked() {
+                    dirty_signal.set(true);
+                }
 
                 // Also update rendered HTML for preview sync
                 let html = crate::components::preview::markdown::render_markdown(&new_content);
@@ -45,7 +48,9 @@ pub fn WysiwygEditor() -> impl IntoView {
                 &cb,
             );
 
-            handle.set_value(Some(h));
+            if !h.is_null() {
+                handle.set_value(Some(h));
+            }
             closure_store.set_value(Some(cb));
         }
     });

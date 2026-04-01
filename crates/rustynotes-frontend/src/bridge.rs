@@ -2,15 +2,19 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
-fn get_bridge() -> js_sys::Object {
-    let window = web_sys::window().unwrap();
-    js_sys::Reflect::get(&window, &"RustyNotesBridge".into())
-        .unwrap()
-        .unchecked_into()
+fn get_bridge() -> Option<js_sys::Object> {
+    let window = web_sys::window()?;
+    let val = js_sys::Reflect::get(&window, &"RustyNotesBridge".into()).ok()?;
+    if val.is_undefined() || val.is_null() {
+        web_sys::console::error_1(&"RustyNotesBridge not found on window".into());
+        None
+    } else {
+        Some(val.unchecked_into())
+    }
 }
 
 fn call_bridge(method: &str, args: &[&JsValue]) -> Result<JsValue, JsValue> {
-    let bridge = get_bridge();
+    let bridge = get_bridge().ok_or_else(|| JsValue::from_str("RustyNotesBridge not available"))?;
     let func: js_sys::Function =
         js_sys::Reflect::get(&bridge, &method.into())?.unchecked_into();
     match args.len() {
@@ -38,11 +42,13 @@ pub fn mount_code_mirror(
 ) -> JsValue {
     let content_val: JsValue = content.into();
     let cb: JsValue = on_change.as_ref().clone();
-    call_bridge(
-        "mountCodeMirror",
-        &[&el.into(), &content_val, options, &cb],
-    )
-    .unwrap()
+    match call_bridge("mountCodeMirror", &[&el.into(), &content_val, options, &cb]) {
+        Ok(handle) => handle,
+        Err(e) => {
+            web_sys::console::error_1(&format!("mountCodeMirror failed: {e:?}").into());
+            JsValue::NULL
+        }
+    }
 }
 
 /// Replace the document content in a CodeMirror instance.
@@ -71,7 +77,13 @@ pub fn mount_tiptap(
 ) -> JsValue {
     let content_val: JsValue = content.into();
     let cb: JsValue = on_change.as_ref().clone();
-    call_bridge("mountTipTap", &[&el.into(), &content_val, options, &cb]).unwrap()
+    match call_bridge("mountTipTap", &[&el.into(), &content_val, options, &cb]) {
+        Ok(handle) => handle,
+        Err(e) => {
+            web_sys::console::error_1(&format!("mountTipTap failed: {e:?}").into());
+            JsValue::NULL
+        }
+    }
 }
 
 /// Replace the document content in a TipTap instance.

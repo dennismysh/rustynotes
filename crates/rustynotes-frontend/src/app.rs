@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use leptos_router::components::*;
 use leptos_router::path;
-use rustynotes_common::{EditorMode, NavMode};
+use rustynotes_common::{AppConfig, EditorMode, NavMode};
 
 use crate::components::editor::{SourceEditor, SplitPane, WysiwygEditor};
 use crate::components::navigation::{Breadcrumb, MillerColumns, Sidebar};
@@ -10,9 +10,19 @@ use crate::components::preview::preview::Preview;
 use crate::components::settings::SettingsWindow;
 use crate::components::toolbar::Toolbar;
 use crate::save;
-use crate::state::{provide_app_state, use_app_state};
+use crate::state::{provide_app_state, use_app_state, AppState};
 use crate::state::SaveStatus;
 use crate::tauri_ipc;
+
+/// Parse editor_mode and nav_mode strings from config and update state signals.
+fn sync_modes_from_config(state: &AppState, config: &AppConfig) {
+    if let Ok(mode) = serde_json::from_str::<EditorMode>(&format!("\"{}\"", config.editor_mode)) {
+        state.editor_mode.set(mode);
+    }
+    if let Ok(mode) = serde_json::from_str::<NavMode>(&format!("\"{}\"", config.nav_mode)) {
+        state.nav_mode.set(mode);
+    }
+}
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -39,7 +49,7 @@ fn MainView() -> impl IntoView {
     // Initialize save handlers (keyboard shortcuts, auto-save timer, focus-loss)
     save::init_save_handlers(&state);
 
-    // Load config on mount and listen for changes from settings window
+    // Load config on mount, apply theme, then show window
     {
         let state = state.clone();
         Effect::new(move |_| {
@@ -47,10 +57,17 @@ fn MainView() -> impl IntoView {
             leptos::task::spawn_local(async move {
                 match tauri_ipc::get_config().await {
                     Ok(config) => {
+                        // Apply theme before showing window to prevent flash
+                        let theme = crate::theme::resolve_theme(&config.theme.active);
+                        crate::theme::apply_theme(&theme, Some(&config.theme.overrides));
+                        sync_modes_from_config(&state, &config);
                         state.app_config.set(Some(config));
+                        tauri_ipc::show_current_window();
                     }
                     Err(e) => {
                         web_sys::console::error_1(&format!("get_config: {e}").into());
+                        // Still show window even if config fails
+                        tauri_ipc::show_current_window();
                     }
                 }
             });
@@ -61,36 +78,37 @@ fn MainView() -> impl IntoView {
     {
         let state = state.clone();
         tauri_ipc::listen_config_changed(move |config| {
+            let theme = crate::theme::resolve_theme(&config.theme.active);
+            crate::theme::apply_theme(&theme, Some(&config.theme.overrides));
+            sync_modes_from_config(&state, &config);
             state.app_config.set(Some(config));
         });
     }
 
-    let nav_view = move || match state.nav_mode.get() {
-        NavMode::Sidebar => view! { <Sidebar /> }.into_any(),
-        NavMode::Miller => view! { <MillerColumns /> }.into_any(),
-        NavMode::Breadcrumb => view! { <Breadcrumb /> }.into_any(),
-    };
-
-    let editor_view = move || match state.editor_mode.get() {
-        EditorMode::Source => view! { <SourceEditor /> }.into_any(),
-        EditorMode::Wysiwyg => view! { <WysiwygEditor /> }.into_any(),
-        EditorMode::Split => view! { <SplitPane /> }.into_any(),
-        EditorMode::Preview => view! { <Preview /> }.into_any(),
-    };
-
     let has_folder = move || state.current_folder.get().is_some();
+    let nav_mode = state.nav_mode;
+    let editor_mode = state.editor_mode;
 
     view! {
-        <div class="app-container">
+        <div class="app-shell">
             <Toolbar />
-            <Show
-                when=has_folder
-                fallback=|| view! { <WelcomeEmptyState /> }
-            >
-                {nav_view}
-                <div class="main-content">
-                    {editor_view}
+            <div class="app-body" style:display=move || if has_folder() { "flex" } else { "none" }>
+                {move || match nav_mode.get() {
+                    NavMode::Sidebar => view! { <Sidebar /> }.into_any(),
+                    NavMode::Miller => view! { <MillerColumns /> }.into_any(),
+                    NavMode::Breadcrumb => view! { <Breadcrumb /> }.into_any(),
+                }}
+                <div class="content-area">
+                    {move || match editor_mode.get() {
+                        EditorMode::Source => view! { <SourceEditor /> }.into_any(),
+                        EditorMode::Wysiwyg => view! { <WysiwygEditor /> }.into_any(),
+                        EditorMode::Split => view! { <SplitPane /> }.into_any(),
+                        EditorMode::Preview => view! { <Preview /> }.into_any(),
+                    }}
                 </div>
+            </div>
+            <Show when=move || !has_folder()>
+                <WelcomeEmptyState />
             </Show>
             // Save-before-switch prompt
             <Show when=move || state.pending_file_switch.get().is_some()>

@@ -26,6 +26,9 @@ pub struct AppState {
     pub save_status: RwSignal<SaveStatus>,
     pub last_save_timestamp: RwSignal<Option<f64>>,
     pub pending_file_switch: RwSignal<Option<String>>,
+    /// When true, editor onChange callbacks should not mark the document dirty.
+    /// Set during programmatic content updates (file load, sync effects).
+    pub suppress_dirty: RwSignal<bool>,
 }
 
 impl AppState {
@@ -45,6 +48,7 @@ impl AppState {
             save_status: RwSignal::new(SaveStatus::Idle),
             last_save_timestamp: RwSignal::new(None),
             pending_file_switch: RwSignal::new(None),
+            suppress_dirty: RwSignal::new(false),
         }
     }
 }
