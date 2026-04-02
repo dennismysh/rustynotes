@@ -1,26 +1,31 @@
 use leptos::prelude::*;
+use wasm_bindgen_futures::spawn_local;
 
 use crate::state::use_app_state;
-use super::markdown::render_markdown;
+use crate::tauri_ipc;
 
 #[component]
 pub fn Preview() -> impl IntoView {
     let state = use_app_state();
 
-    let html = Memo::new(move |_| {
+    Effect::new(move |_| {
         let content = state.active_file_content.get();
+        let rendered_html = state.rendered_html;
         if content.is_empty() {
-            String::new()
+            rendered_html.set(String::new());
         } else {
-            render_markdown(&content)
+            spawn_local(async move {
+                match tauri_ipc::parse_markdown(&content).await {
+                    Ok(html) => rendered_html.set(html),
+                    Err(e) => {
+                        web_sys::console::error_1(&format!("parse_markdown: {e}").into());
+                    }
+                }
+            });
         }
     });
 
-    Effect::new(move || {
-        state.rendered_html.set(html.get());
-    });
-
     view! {
-        <div class="preview-container" inner_html=move || html.get() />
+        <div class="preview-container" inner_html=move || state.rendered_html.get() />
     }
 }
