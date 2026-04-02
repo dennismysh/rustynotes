@@ -174,7 +174,9 @@ fn TreeNode(entry: FileNode, depth: usize) -> AnyView {
         }
     };
 
-    let padding_left = format!("{}px", 12 + depth * 16);
+    // Cap indentation at depth 6 to prevent deep trees from pushing names off-screen
+    let capped_depth = depth.min(6);
+    let padding_left = format!("{}px", 12 + capped_depth * 14);
 
     let icon = move || {
         if entry_is_dir {
@@ -212,7 +214,10 @@ fn TreeNode(entry: FileNode, depth: usize) -> AnyView {
                 aria-label=aria_label_clone
             >
                 <span class="icon" aria-hidden="true">{icon}</span>
-                <span class="name">{entry_name}</span>
+                {
+                    let title = entry_name.clone();
+                    view! { <span class="name" title=title>{entry_name}</span> }
+                }
             </div>
             <Show when=move || entry_is_dir && expanded.get()>
                 {

@@ -248,7 +248,7 @@ body, #root, main {
 .tree-item.active { background: var(--accent); color: var(--accent-fg); }
 .tree-item .icon { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; }
 .tree-item .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tree-children { padding-left: 16px; }
+.tree-children { padding-left: 0; }
 
 /* ===== Shared Markdown Content ===== */
 
