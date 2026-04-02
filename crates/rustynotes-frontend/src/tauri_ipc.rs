@@ -166,6 +166,20 @@ pub async fn export_file(
 }
 
 // ---------------------------------------------------------------------------
+// Markdown command
+// ---------------------------------------------------------------------------
+
+pub async fn parse_markdown(content: &str) -> Result<String, String> {
+    #[derive(Serialize)]
+    struct Args<'a> {
+        content: &'a str,
+    }
+    let val = tauri_invoke("parse_markdown", &Args { content }).await?;
+    val.as_string()
+        .ok_or_else(|| "parse_markdown: expected string result".to_string())
+}
+
+// ---------------------------------------------------------------------------
 // Dialog functions (plugin namespace: __TAURI__.dialog)
 // ---------------------------------------------------------------------------
 
@@ -241,23 +255,6 @@ pub fn show_current_window() {
 // ---------------------------------------------------------------------------
 // Event listeners (app-lifetime — closures are `.forget()`-ed)
 // ---------------------------------------------------------------------------
-
-/// Listen to the `file-changed` Tauri event. The backend emits
-/// `FileChangeEvent { paths, kind }` — this callback receives the
-/// serialised JSON string of the event payload.
-pub fn listen_file_changed(callback: impl Fn(String) + 'static) {
-    listen_event("file-changed", move |payload: JsValue| {
-        // The Tauri event wrapper is { event, id, payload }.
-        // Extract .payload, then serialise it to a JSON string for the caller.
-        if let Ok(inner) = reflect_get(&payload, "payload") {
-            if let Ok(json) = js_sys::JSON::stringify(&inner) {
-                if let Some(s) = json.as_string() {
-                    callback(s);
-                }
-            }
-        }
-    });
-}
 
 /// Listen to the `config-changed` Tauri event. Deserialises the payload
 /// into `AppConfig` before calling the callback.

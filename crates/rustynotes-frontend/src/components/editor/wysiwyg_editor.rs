@@ -33,9 +33,13 @@ pub fn WysiwygEditor() -> impl IntoView {
                     dirty_signal.set(true);
                 }
 
-                // Also update rendered HTML for preview sync
-                let html = crate::components::preview::markdown::render_markdown(&new_content);
-                rendered_html_signal.set(html);
+                // Update rendered HTML for preview sync via backend IPC
+                let content_for_render = new_content;
+                wasm_bindgen_futures::spawn_local(async move {
+                    if let Ok(html) = crate::tauri_ipc::parse_markdown(&content_for_render).await {
+                        rendered_html_signal.set(html);
+                    }
+                });
             }) as Box<dyn Fn(String)>);
 
             let options = js_sys::Object::new();

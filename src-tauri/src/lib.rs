@@ -44,6 +44,7 @@ pub fn run() {
             commands::config::save_config_cmd,
             commands::config::open_settings,
             commands::export::export_file,
+            commands::markdown::parse_markdown,
             watch_folder,
         ])
         .run(tauri::generate_context!())

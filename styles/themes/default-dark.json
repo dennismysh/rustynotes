@@ -15,7 +15,10 @@
     "alert-warning": "#f9e2af",
     "alert-caution": "#f38ba8",
     "shadow-color": "rgba(0, 0, 0, 0.4)",
-    "overlay-bg": "rgba(0, 0, 0, 0.6)"
+    "surface": "#1e1e2e",
+    "surface-hover": "#313244",
+    "text": "#cdd6f4",
+    "error": "#f38ba8"
   },
   "typography": {
     "body-font": "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
