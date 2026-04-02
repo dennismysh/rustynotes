@@ -242,23 +242,6 @@ pub fn show_current_window() {
 // Event listeners (app-lifetime — closures are `.forget()`-ed)
 // ---------------------------------------------------------------------------
 
-/// Listen to the `file-changed` Tauri event. The backend emits
-/// `FileChangeEvent { paths, kind }` — this callback receives the
-/// serialised JSON string of the event payload.
-pub fn listen_file_changed(callback: impl Fn(String) + 'static) {
-    listen_event("file-changed", move |payload: JsValue| {
-        // The Tauri event wrapper is { event, id, payload }.
-        // Extract .payload, then serialise it to a JSON string for the caller.
-        if let Ok(inner) = reflect_get(&payload, "payload") {
-            if let Ok(json) = js_sys::JSON::stringify(&inner) {
-                if let Some(s) = json.as_string() {
-                    callback(s);
-                }
-            }
-        }
-    });
-}
-
 /// Listen to the `config-changed` Tauri event. Deserialises the payload
 /// into `AppConfig` before calling the callback.
 pub fn listen_config_changed(callback: impl Fn(AppConfig) + 'static) {
