@@ -250,6 +250,18 @@ pub fn load_file(state: &AppState, path: String) {
                 state.active_file_content.set(content);
                 state.is_dirty.set(false);
                 state.save_status.set(SaveStatus::Idle);
+                // Reset scroll position to top for the new file
+                if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
+                    if let Some(el) = doc.query_selector(".content-area").ok().flatten() {
+                        el.set_scroll_top(0);
+                    }
+                    if let Some(el) = doc.query_selector(".editor-container").ok().flatten() {
+                        el.set_scroll_top(0);
+                    }
+                    if let Some(el) = doc.query_selector(".preview-container").ok().flatten() {
+                        el.set_scroll_top(0);
+                    }
+                }
             }
             Err(e) => {
                 web_sys::console::error_1(&format!("Failed to read file: {e}").into());
