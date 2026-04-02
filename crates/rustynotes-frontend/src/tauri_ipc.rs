@@ -166,6 +166,20 @@ pub async fn export_file(
 }
 
 // ---------------------------------------------------------------------------
+// Markdown command
+// ---------------------------------------------------------------------------
+
+pub async fn parse_markdown(content: &str) -> Result<String, String> {
+    #[derive(Serialize)]
+    struct Args<'a> {
+        content: &'a str,
+    }
+    let val = tauri_invoke("parse_markdown", &Args { content }).await?;
+    val.as_string()
+        .ok_or_else(|| "parse_markdown: expected string result".to_string())
+}
+
+// ---------------------------------------------------------------------------
 // Dialog functions (plugin namespace: __TAURI__.dialog)
 // ---------------------------------------------------------------------------
 
