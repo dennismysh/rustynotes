@@ -1,0 +1,183 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install Trunk
+        run: cargo install trunk
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install Node dependencies
+        run: pnpm install
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      # ── Build ──────────────────────────────────────────────────
+      - name: Build Tauri app
+        run: cargo tauri build
+        working-directory: src-tauri
+
+      # ── 1. Import signing certificate ──────────────────────────
+      - name: Import signing certificate
+        env:
+          DEVELOPER_ID_CERT_BASE64: ${{ secrets.DEVELOPER_ID_CERT_BASE64 }}
+          DEVELOPER_ID_CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+        run: |
+          CERT_PATH="$RUNNER_TEMP/certificate.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
+
+          echo "$DEVELOPER_ID_CERT_BASE64" | base64 --decode > "$CERT_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          security import "$CERT_PATH" \
+            -P "$DEVELOPER_ID_CERT_PASSWORD" \
+            -A -t cert -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          security list-keychains -d user -s "$KEYCHAIN_PATH" \
+            $(security list-keychains -d user | tr -d '"')
+
+          # Install Developer ID intermediate cert
+          curl -sO https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
+          security add-certificates DeveloperIDG2CA.cer -k "$KEYCHAIN_PATH"
+          rm -f DeveloperIDG2CA.cer
+
+          rm -f "$CERT_PATH"
+
+      # ── 2. Sign the .app bundle ────────────────────────────────
+      - name: Sign .app bundle
+        run: |
+          APP_PATH="src-tauri/target/release/bundle/macos/rustynotes.app"
+          ENTITLEMENTS="resources/rustynotes.entitlements"
+          IDENTITY=$(security find-identity -v -p codesigning \
+            | grep "Developer ID Application" | head -1 \
+            | sed 's/.*"\(.*\)".*/\1/')
+
+          echo "Signing with: $IDENTITY"
+
+          # Sign inner binary first, then outer bundle
+          codesign --force --options runtime \
+            --sign "$IDENTITY" \
+            --entitlements "$ENTITLEMENTS" \
+            "$APP_PATH/Contents/MacOS/rustynotes"
+
+          codesign --force --options runtime \
+            --sign "$IDENTITY" \
+            --entitlements "$ENTITLEMENTS" \
+            "$APP_PATH"
+
+          codesign --verify --deep --strict "$APP_PATH"
+          echo "Signing verified"
+
+      # ── 3. Notarize the .app ──────────────────────────────────
+      - name: Notarize .app bundle
+        env:
+          NOTARY_KEY_BASE64: ${{ secrets.NOTARY_KEY_BASE64 }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          APP_PATH="src-tauri/target/release/bundle/macos/rustynotes.app"
+          NOTARY_KEY_PATH="$RUNNER_TEMP/notary-key.p8"
+          echo "$NOTARY_KEY_BASE64" | base64 --decode > "$NOTARY_KEY_PATH"
+
+          ditto -c -k --keepParent "$APP_PATH" rustynotes-notarize.zip
+
+          xcrun notarytool submit rustynotes-notarize.zip \
+            --key "$NOTARY_KEY_PATH" \
+            --key-id "$NOTARY_KEY_ID" \
+            --issuer "$NOTARY_ISSUER_ID" \
+            --wait
+
+          xcrun stapler staple "$APP_PATH"
+          rm -f rustynotes-notarize.zip
+
+      # ── 4. Create DMG ─────────────────────────────────────────
+      - name: Create DMG
+        run: |
+          brew install create-dmg
+          TAG="${GITHUB_REF#refs/tags/}"
+          APP_PATH="src-tauri/target/release/bundle/macos/rustynotes.app"
+
+          create-dmg \
+            --volname "RustyNotes" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "rustynotes.app" 150 200 \
+            --app-drop-link 450 200 \
+            --no-internet-enable \
+            "RustyNotes-${TAG}-macos.dmg" \
+            "$APP_PATH"
+
+      # ── 5. Sign + notarize DMG ────────────────────────────────
+      - name: Sign and notarize DMG
+        env:
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          DMG_NAME="RustyNotes-${TAG}-macos.dmg"
+          NOTARY_KEY_PATH="$RUNNER_TEMP/notary-key.p8"
+          IDENTITY=$(security find-identity -v -p codesigning \
+            | grep "Developer ID Application" | head -1 \
+            | sed 's/.*"\(.*\)".*/\1/')
+
+          codesign --force --sign "$IDENTITY" "$DMG_NAME"
+
+          xcrun notarytool submit "$DMG_NAME" \
+            --key "$NOTARY_KEY_PATH" \
+            --key-id "$NOTARY_KEY_ID" \
+            --issuer "$NOTARY_ISSUER_ID" \
+            --wait
+
+          xcrun stapler staple "$DMG_NAME"
+
+      # ── 6. Upload release artifact ────────────────────────────
+      - name: Upload DMG to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: RustyNotes-*.dmg
+
+      # ── 7. Cleanup (always runs) ──────────────────────────────
+      - name: Cleanup signing artifacts
+        if: always()
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+          [ -f "$KEYCHAIN_PATH" ] && security delete-keychain "$KEYCHAIN_PATH"
+          rm -f "$RUNNER_TEMP/certificate.p12"
+          rm -f "$RUNNER_TEMP/notary-key.p8"
