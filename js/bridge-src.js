@@ -60,19 +60,20 @@ window.RustyNotesBridge = {
       element,
       extensions: exts,
       content,
-      onUpdate: ({ editor }) => onChange(editor.storage.markdown.getMarkdown()),
+      contentType: 'markdown',
+      onUpdate: ({ editor }) => onChange(editor.getMarkdown()),
     });
     return { editor };
   },
 
   updateTipTap(handle, content) {
-    if (handle.editor.storage.markdown.getMarkdown() !== content) {
-      handle.editor.commands.setContent(content);
+    if (handle.editor.getMarkdown() !== content) {
+      handle.editor.commands.setContent(content, { contentType: 'markdown' });
     }
   },
 
   getTipTapMarkdown(handle) {
-    return handle.editor.storage.markdown.getMarkdown();
+    return handle.editor.getMarkdown();
   },
 
   focusTipTap(handle) {

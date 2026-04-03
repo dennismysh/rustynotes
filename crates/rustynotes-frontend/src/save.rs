@@ -275,3 +275,25 @@ pub fn load_file(state: &AppState, path: String) {
         .forget();
     });
 }
+
+/// Open a folder: set it as current, load file tree, watch for changes,
+/// and persist it to recent_folders in the config.
+pub async fn open_folder(state: &AppState, folder: String) {
+    state.current_folder.set(Some(folder.clone()));
+    match tauri_ipc::list_directory(&folder).await {
+        Ok(tree) => state.file_tree.set(tree),
+        Err(e) => {
+            web_sys::console::error_1(&format!("list_directory failed: {e}").into());
+        }
+    }
+    if let Err(e) = tauri_ipc::watch_folder(&folder).await {
+        web_sys::console::error_1(&format!("watch_folder failed: {e}").into());
+    }
+    // Persist to recent_folders
+    if let Some(mut config) = state.app_config.get_untracked() {
+        config.recent_folders.retain(|f| f != &folder);
+        config.recent_folders.insert(0, folder);
+        config.recent_folders.truncate(10);
+        let _ = tauri_ipc::save_config_cmd(config).await;
+    }
+}

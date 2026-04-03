@@ -62,26 +62,13 @@ pub fn Toolbar() -> impl IntoView {
 
     // ---- handlers ----
 
+    let state_for_folder = state.clone();
     let handle_open_folder = move |_| {
+        let state = state_for_folder.clone();
         leptos::task::spawn_local(async move {
             match tauri_ipc::open_folder_dialog().await {
                 Ok(Some(folder)) => {
-                    current_folder.set(Some(folder.clone()));
-                    match tauri_ipc::list_directory(&folder).await {
-                        Ok(tree) => {
-                            file_tree.set(tree);
-                        }
-                        Err(e) => {
-                            web_sys::console::error_1(
-                                &format!("list_directory failed: {e}").into(),
-                            );
-                        }
-                    }
-                    if let Err(e) = tauri_ipc::watch_folder(&folder).await {
-                        web_sys::console::error_1(
-                            &format!("watch_folder failed: {e}").into(),
-                        );
-                    }
+                    crate::save::open_folder(&state, folder).await;
                 }
                 Ok(None) => { /* user cancelled */ }
                 Err(e) => {

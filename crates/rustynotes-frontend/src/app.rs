@@ -61,7 +61,12 @@ fn MainView() -> impl IntoView {
                         let theme = crate::theme::resolve_theme(&config.theme.active);
                         crate::theme::apply_theme(&theme, Some(&config.theme.overrides));
                         sync_modes_from_config(&state, &config);
+                        // Auto-open last folder if available
+                        let last_folder = config.recent_folders.first().cloned();
                         state.app_config.set(Some(config));
+                        if let Some(folder) = last_folder {
+                            save::open_folder(&state, folder).await;
+                        }
                         tauri_ipc::show_current_window();
                     }
                     Err(e) => {

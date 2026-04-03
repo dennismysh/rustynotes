@@ -1807,6 +1807,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "gloo-timers"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbb143cf96099802033e0d4f4963b19fd2e0b728bcf076cd9cf7f6634f092994"
+dependencies = [
+ "futures-channel",
+ "futures-core",
+ "js-sys",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "gloo-utils"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3964,12 +3976,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "regex-lite"
-version = "0.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cab834c73d247e67f4fae452806d17d3c7501756d98c8808d7c9c7aa7d18f973"
-
-[[package]]
 name = "regex-syntax"
 version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4088,14 +4094,19 @@ version = "0.1.0"
 dependencies = [
  "comrak",
  "dirs",
+ "html-escape",
  "notify",
+ "once_cell",
+ "regex",
  "rustynotes-common",
  "serde",
  "serde_json",
+ "syntect",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
+ "tauri-plugin-window-state",
  "tempfile",
  "thiserror 2.0.18",
  "walkdir",
@@ -4113,20 +4124,16 @@ dependencies = [
 name = "rustynotes-frontend"
 version = "0.1.0"
 dependencies = [
- "comrak",
  "console_error_panic_hook",
  "gloo-storage",
- "html-escape",
+ "gloo-timers",
  "js-sys",
  "leptos",
  "leptos_router",
- "once_cell",
- "regex-lite",
  "rustynotes-common",
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
- "syntect",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
@@ -5069,6 +5076,21 @@ dependencies = [
  "url",
  "windows",
  "zbus",
+]
+
+[[package]]
+name = "tauri-plugin-window-state"
+version = "2.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73736611e14142408d15353e21e3cca2f12a3cfb523ad0ce85999b6d2ef1a704"
+dependencies = [
+ "bitflags 2.11.0",
+ "log",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

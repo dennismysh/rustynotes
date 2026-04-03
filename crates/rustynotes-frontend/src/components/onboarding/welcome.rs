@@ -46,31 +46,17 @@ pub fn WelcomeEmptyState() -> impl IntoView {
 
     // ---- handlers ----
 
-    let current_folder = state.current_folder;
-    let file_tree = state.file_tree;
-
+    let state_for_open = state.clone();
     let open_folder = move |_| {
         let set_first_run = set_first_run;
+        let state = state_for_open.clone();
         leptos::task::spawn_local(async move {
             if is_first_run.get_untracked() {
                 mark_welcomed(set_first_run);
             }
             match tauri_ipc::open_folder_dialog().await {
                 Ok(Some(folder)) => {
-                    current_folder.set(Some(folder.clone()));
-                    match tauri_ipc::list_directory(&folder).await {
-                        Ok(tree) => file_tree.set(tree),
-                        Err(e) => {
-                            web_sys::console::error_1(
-                                &format!("list_directory failed: {e}").into(),
-                            );
-                        }
-                    }
-                    if let Err(e) = tauri_ipc::watch_folder(&folder).await {
-                        web_sys::console::error_1(
-                            &format!("watch_folder failed: {e}").into(),
-                        );
-                    }
+                    crate::save::open_folder(&state, folder).await;
                 }
                 Ok(None) => { /* user cancelled */ }
                 Err(e) => {
@@ -112,6 +98,9 @@ pub fn WelcomeEmptyState() -> impl IntoView {
                 <div class="recent-folders">
                     <h2 class="recent-folders-heading">"Recent"</h2>
                     <ul class="recent-folders-list">
+                        {
+                        let state_for_list = state.clone();
+                        view! {
                         <For
                             each=move || {
                                 recent_folders.get().into_iter().take(5).collect::<Vec<_>>()
@@ -123,26 +112,15 @@ pub fn WelcomeEmptyState() -> impl IntoView {
                                 let folder_for_path = folder.clone();
                                 let folder_for_name = folder.clone();
                                 let set_first_run = set_first_run;
+                                let state_for_recent = state_for_list.clone();
                                 let handle_recent = move |_| {
                                     let folder = folder_for_click.clone();
+                                    let state = state_for_recent.clone();
                                     leptos::task::spawn_local(async move {
                                         if is_first_run.get_untracked() {
                                             mark_welcomed(set_first_run);
                                         }
-                                        current_folder.set(Some(folder.clone()));
-                                        match tauri_ipc::list_directory(&folder).await {
-                                            Ok(tree) => file_tree.set(tree),
-                                            Err(e) => {
-                                                web_sys::console::error_1(
-                                                    &format!("list_directory failed: {e}").into(),
-                                                );
-                                            }
-                                        }
-                                        if let Err(e) = tauri_ipc::watch_folder(&folder).await {
-                                            web_sys::console::error_1(
-                                                &format!("watch_folder failed: {e}").into(),
-                                            );
-                                        }
+                                        crate::save::open_folder(&state, folder).await;
                                     });
                                 };
                                 let display_name = folder_name(&folder_for_name).to_string();
@@ -167,6 +145,8 @@ pub fn WelcomeEmptyState() -> impl IntoView {
                                 }
                             }
                         />
+                        }
+                        }
                     </ul>
                 </div>
             </Show>

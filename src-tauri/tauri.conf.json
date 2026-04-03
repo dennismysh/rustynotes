@@ -10,12 +10,14 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "RustyNotes",
         "width": 1100,
         "height": 750,
-        "visible": false
+        "visible": true,
+        "theme": "Dark"
       }
     ],
     "security": {

@@ -1,0 +1,123 @@
+<h2>Settings Window Layout</h2>
+<p class="subtitle">macOS System Settings style — sidebar + detail pane in a separate window</p>
+
+<div class="mockup" style="max-width: 700px; margin: 2rem auto;">
+  <div class="mockup-header">Settings — 700 × 500px separate window</div>
+  <div class="mockup-body" style="padding: 0; display: flex; height: 420px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13px; background: #1e1e2e;">
+
+    <!-- Sidebar -->
+    <div style="width: 200px; min-width: 200px; background: #181825; border-right: 1px solid #313244; padding: 12px 0; overflow-y: auto;">
+      <div style="padding: 8px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #6c7086; margin-bottom: 4px;">Settings</div>
+
+      <!-- Active item -->
+      <div style="padding: 8px 16px; display: flex; align-items: center; gap: 10px; background: #313244; border-radius: 6px; margin: 2px 8px; color: #cdd6f4;">
+        <span style="font-size: 15px;">🎨</span>
+        <span style="font-weight: 500;">Appearance</span>
+      </div>
+
+      <div style="padding: 8px 16px; display: flex; align-items: center; gap: 10px; margin: 2px 8px; color: #a6adc8; border-radius: 6px;">
+        <span style="font-size: 15px;">✏️</span>
+        <span>Editor</span>
+      </div>
+
+      <div style="padding: 8px 16px; display: flex; align-items: center; gap: 10px; margin: 2px 8px; color: #a6adc8; border-radius: 6px;">
+        <span style="font-size: 15px;">👁</span>
+        <span>Preview</span>
+      </div>
+
+      <div style="padding: 8px 16px; display: flex; align-items: center; gap: 10px; margin: 2px 8px; color: #a6adc8; border-radius: 6px;">
+        <span style="font-size: 15px;">📁</span>
+        <span>Files</span>
+      </div>
+
+      <div style="padding: 8px 16px; display: flex; align-items: center; gap: 10px; margin: 2px 8px; color: #a6adc8; border-radius: 6px;">
+        <span style="font-size: 15px;">⌨️</span>
+        <span>Keyboard</span>
+      </div>
+
+      <div style="padding: 8px 16px; display: flex; align-items: center; gap: 10px; margin: 2px 8px; color: #a6adc8; border-radius: 6px;">
+        <span style="font-size: 15px;">🔌</span>
+        <span>Advanced</span>
+      </div>
+    </div>
+
+    <!-- Detail Pane -->
+    <div style="flex: 1; padding: 24px 32px; overflow-y: auto; color: #cdd6f4;">
+      <h3 style="font-size: 20px; font-weight: 600; margin: 0 0 4px 0; color: #cdd6f4;">Appearance</h3>
+      <p style="font-size: 12px; color: #6c7086; margin: 0 0 24px 0;">Theme, colors, and typography</p>
+
+      <!-- Setting Row: Theme -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #313244;">
+        <div>
+          <div style="font-weight: 500; color: #cdd6f4;">Theme</div>
+          <div style="font-size: 11px; color: #6c7086; margin-top: 2px;">Follow system or choose manually</div>
+        </div>
+        <div style="background: #313244; border: 1px solid #45475a; border-radius: 6px; padding: 6px 12px; color: #cdd6f4; font-size: 12px; min-width: 120px; text-align: left;">
+          Auto (System) ▾
+        </div>
+      </div>
+
+      <!-- Setting Row: Accent Color -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #313244;">
+        <div>
+          <div style="font-weight: 500; color: #cdd6f4;">Accent Color</div>
+          <div style="font-size: 11px; color: #6c7086; margin-top: 2px;">Used for links, selections, and highlights</div>
+        </div>
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <div style="width: 24px; height: 24px; border-radius: 50%; background: #89b4fa; border: 2px solid #cdd6f4;"></div>
+          <div style="width: 24px; height: 24px; border-radius: 50%; background: #a6e3a1;"></div>
+          <div style="width: 24px; height: 24px; border-radius: 50%; background: #f9e2af;"></div>
+          <div style="width: 24px; height: 24px; border-radius: 50%; background: #f38ba8;"></div>
+          <div style="width: 24px; height: 24px; border-radius: 50%; background: #cba6f7;"></div>
+          <div style="background: #313244; border: 1px solid #45475a; border-radius: 6px; padding: 4px 8px; color: #6c7086; font-size: 11px; margin-left: 4px;">Custom</div>
+        </div>
+      </div>
+
+      <!-- Setting Row: Font Size -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #313244;">
+        <div>
+          <div style="font-weight: 500; color: #cdd6f4;">Font Size</div>
+          <div style="font-size: 11px; color: #6c7086; margin-top: 2px;">Base size for editor content</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 11px; color: #6c7086;">A</span>
+          <div style="width: 120px; height: 4px; background: #313244; border-radius: 2px; position: relative;">
+            <div style="position: absolute; left: 30%; top: -4px; width: 12px; height: 12px; background: #89b4fa; border-radius: 50%;"></div>
+          </div>
+          <span style="font-size: 15px; color: #6c7086;">A</span>
+          <span style="font-size: 12px; color: #a6adc8; min-width: 30px; text-align: right;">15px</span>
+        </div>
+      </div>
+
+      <!-- Setting Row: Font Family -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #313244;">
+        <div>
+          <div style="font-weight: 500; color: #cdd6f4;">Editor Font</div>
+          <div style="font-size: 11px; color: #6c7086; margin-top: 2px;">Monospace font for source editing</div>
+        </div>
+        <div style="background: #313244; border: 1px solid #45475a; border-radius: 6px; padding: 6px 12px; color: #cdd6f4; font-size: 12px; min-width: 120px; text-align: left;">
+          System Default ▾
+        </div>
+      </div>
+
+      <!-- Setting Row: Line Height -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0;">
+        <div>
+          <div style="font-weight: 500; color: #cdd6f4;">Line Height</div>
+          <div style="font-size: 11px; color: #6c7086; margin-top: 2px;">Spacing between lines in the editor</div>
+        </div>
+        <div style="background: #313244; border: 1px solid #45475a; border-radius: 6px; padding: 6px 12px; color: #cdd6f4; font-size: 12px; min-width: 120px; text-align: left;">
+          1.6 (Comfortable) ▾
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="max-width: 700px; margin: 1.5rem auto 0;">
+  <div style="display: flex; gap: 24px; font-size: 13px; color: #a6adc8;">
+    <div><strong style="color: #cdd6f4;">Window:</strong> 700×500, resizable, singleton</div>
+    <div><strong style="color: #cdd6f4;">Open:</strong> Cmd+, or toolbar button</div>
+    <div><strong style="color: #cdd6f4;">Close:</strong> Cmd+W hides (instant reopen)</div>
+  </div>
+</div>
