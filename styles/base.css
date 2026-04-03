@@ -93,6 +93,56 @@ body, #root, main {
   background: var(--bg-primary);
 }
 
+/* ===== Traffic Light Buttons (custom window controls) ===== */
+
+.titlebar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.titlebar-btn {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.titlebar-btn.close { background: #ff5f57; }
+.titlebar-btn.minimize { background: #febc2e; }
+.titlebar-btn.maximize { background: #28c840; }
+
+.titlebar-btn:hover.close { background: #ff3b30; }
+.titlebar-btn:hover.minimize { background: #f0a608; }
+.titlebar-btn:hover.maximize { background: #1db740; }
+
+/* Show symbols on hover */
+.titlebar-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0);
+  transition: color 0.1s;
+}
+
+.titlebar-btn:hover::after {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.titlebar-btn.close:hover::after { content: "\00D7"; }
+.titlebar-btn.minimize:hover::after { content: "\2013"; }
+.titlebar-btn.maximize:hover::after { content: "\002B"; }
+
 /* ===== App Shell ===== */
 
 .app-shell {
@@ -100,7 +150,6 @@ body, #root, main {
   flex-direction: column;
   height: 100%;
 }
-
 
 .app-body {
   display: flex;
@@ -112,15 +161,16 @@ body, #root, main {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  height: 42px;
+  min-height: 42px;
   padding: 0 var(--space-md);
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
-  -webkit-app-region: drag;
   user-select: none;
+  cursor: default;
 }
 
-.toolbar button {
-  -webkit-app-region: no-drag;
+.toolbar button:not(.titlebar-btn) {
   background: none;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -173,13 +223,12 @@ body, #root, main {
 }
 
 .toolbar .toolbar-icon-btn {
-  -webkit-app-region: no-drag;
   background: none;
   border: none;
   border-radius: 6px;
   color: var(--text-secondary);
-  padding: var(--space-xs) var(--space-sm);
-  font-size: 16px;
+  padding: 6px 10px;
+  font-size: 20px;
   cursor: pointer;
   line-height: 1;
 }

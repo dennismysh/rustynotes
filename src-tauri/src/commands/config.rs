@@ -38,7 +38,7 @@ pub fn open_settings(app: AppHandle) -> Result<(), String> {
         .title("Settings")
         .inner_size(700.0, 500.0)
         .min_inner_size(500.0, 350.0)
-        .theme(Some(tauri::Theme::Dark))
+        .decorations(false)
         .build()
         .map_err(|e| e.to_string())?;
 

@@ -8,6 +8,7 @@ use crate::components::navigation::{Breadcrumb, MillerColumns, Sidebar};
 use crate::components::onboarding::WelcomeEmptyState;
 use crate::components::preview::preview::Preview;
 use crate::components::settings::SettingsWindow;
+use crate::components::titlebar::TitleBar;
 use crate::components::toolbar::Toolbar;
 use crate::save;
 use crate::state::{provide_app_state, use_app_state, AppState};

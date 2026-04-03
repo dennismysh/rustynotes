@@ -1,10 +1,29 @@
 /* Settings Window Layout */
 .settings-window {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-body);
+}
+
+.settings-window .custom-titlebar {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 var(--space-md);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+  cursor: default;
+}
+
+.settings-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 /* Sidebar */

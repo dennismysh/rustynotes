@@ -7,6 +7,7 @@ use crate::components::settings::categories::{
     AdvancedSettings, AppearanceSettings, EditorSettings, PreviewSettings, SavingSettings,
 };
 use crate::components::settings::settings_sidebar::{SettingsCategory, SettingsSidebar};
+use crate::components::titlebar::TitleBar;
 use crate::tauri_ipc;
 use crate::theme::{apply_theme, resolve_theme};
 
@@ -43,6 +44,8 @@ pub fn SettingsWindow() -> impl IntoView {
 
     view! {
         <div class="settings-window">
+            <TitleBar />
+            <div class="settings-body">
             <SettingsSidebar
                 categories=categories()
                 active_id=active_id_signal
@@ -57,6 +60,7 @@ pub fn SettingsWindow() -> impl IntoView {
                     _          => view! { <AppearanceSettings /> }.into_any(),
                 }}
             </main>
+            </div>
         </div>
     }
 }

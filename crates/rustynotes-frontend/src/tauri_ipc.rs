@@ -252,6 +252,43 @@ pub fn show_current_window() {
     }
 }
 
+/// Helper: call a method on the current Tauri window.
+fn call_current_window(method: &str) {
+    let run = || -> Result<(), String> {
+        let window = web_sys::window().ok_or("no global `window`")?;
+        let tauri = reflect_get(&window, "__TAURI__")?;
+        let window_ns = reflect_get(&tauri, "window")?;
+        let get_current =
+            js_sys::Function::from(reflect_get(&window_ns, "getCurrentWindow")?);
+        let current_win = get_current
+            .call0(&window_ns)
+            .map_err(|e| format!("getCurrentWindow: {e:?}"))?;
+        let func = js_sys::Function::from(reflect_get(&current_win, method)?);
+        func.call0(&current_win)
+            .map_err(|e| format!("{method}: {e:?}"))?;
+        Ok(())
+    };
+    if let Err(e) = run() {
+        web_sys::console::error_1(&format!("call_current_window({method}): {e}").into());
+    }
+}
+
+pub fn close_current_window() {
+    call_current_window("close");
+}
+
+pub fn minimize_current_window() {
+    call_current_window("minimize");
+}
+
+pub fn toggle_maximize_current_window() {
+    call_current_window("toggleMaximize");
+}
+
+pub fn start_dragging() {
+    call_current_window("startDragging");
+}
+
 // ---------------------------------------------------------------------------
 // Event listeners (app-lifetime — closures are `.forget()`-ed)
 // ---------------------------------------------------------------------------

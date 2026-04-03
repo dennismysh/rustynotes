@@ -17,7 +17,7 @@
         "width": 1100,
         "height": 750,
         "visible": true,
-        "theme": "Dark"
+        "decorations": false
       }
     ],
     "security": {
