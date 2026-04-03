@@ -71,9 +71,9 @@ jobs:
           security list-keychains -d user -s "$KEYCHAIN_PATH" \
             $(security list-keychains -d user | tr -d '"')
 
-          # Install Developer ID intermediate cert
+          # Install Apple intermediate certs for Developer ID chain
           curl -sO https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
-          security add-certificates DeveloperIDG2CA.cer -k "$KEYCHAIN_PATH"
+          security import DeveloperIDG2CA.cer -k "$KEYCHAIN_PATH" -T /usr/bin/codesign || true
           rm -f DeveloperIDG2CA.cer
 
           rm -f "$CERT_PATH"
