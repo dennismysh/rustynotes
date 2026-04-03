@@ -20,8 +20,8 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
 
-      - name: Install Trunk
-        run: cargo install trunk
+      - name: Install Trunk and Tauri CLI
+        run: cargo install trunk tauri-cli
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -42,8 +42,7 @@ jobs:
 
       # ── Build ──────────────────────────────────────────────────
       - name: Build Tauri app
-        run: cargo tauri build
-        working-directory: src-tauri
+        run: pnpm tauri build
 
       # ── 1. Import signing certificate ──────────────────────────
       - name: Import signing certificate
