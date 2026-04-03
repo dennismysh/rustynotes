@@ -81,7 +81,7 @@ jobs:
       # ── 2. Sign the .app bundle ────────────────────────────────
       - name: Sign .app bundle
         run: |
-          APP_PATH="src-tauri/target/release/bundle/macos/rustynotes.app"
+          APP_PATH="target/release/bundle/macos/rustynotes.app"
           ENTITLEMENTS="resources/rustynotes.entitlements"
           IDENTITY=$(security find-identity -v -p codesigning \
             | grep "Developer ID Application" | head -1 \
@@ -110,7 +110,7 @@ jobs:
           NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
           NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
         run: |
-          APP_PATH="src-tauri/target/release/bundle/macos/rustynotes.app"
+          APP_PATH="target/release/bundle/macos/rustynotes.app"
           NOTARY_KEY_PATH="$RUNNER_TEMP/notary-key.p8"
           echo "$NOTARY_KEY_BASE64" | base64 --decode > "$NOTARY_KEY_PATH"
 
@@ -130,7 +130,7 @@ jobs:
         run: |
           brew install create-dmg
           TAG="${GITHUB_REF#refs/tags/}"
-          APP_PATH="src-tauri/target/release/bundle/macos/rustynotes.app"
+          APP_PATH="target/release/bundle/macos/rustynotes.app"
 
           create-dmg \
             --volname "RustyNotes" \
