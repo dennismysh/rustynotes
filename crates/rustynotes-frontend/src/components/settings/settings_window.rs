@@ -5,6 +5,7 @@ use leptos::prelude::*;
 
 use crate::components::settings::categories::{
     AdvancedSettings, AppearanceSettings, EditorSettings, PreviewSettings, SavingSettings,
+    UpdateSettings,
 };
 use crate::components::settings::settings_sidebar::{SettingsCategory, SettingsSidebar};
 use crate::components::titlebar::TitleBar;
@@ -18,6 +19,7 @@ fn categories() -> Vec<SettingsCategory> {
         SettingsCategory { id: "saving",     label: "Saving",     icon: "\u{1F4BE}" },
         SettingsCategory { id: "preview",    label: "Preview",    icon: "\u{1F441}" },
         SettingsCategory { id: "advanced",   label: "Advanced",   icon: "\u{1F50C}" },
+        SettingsCategory { id: "updates",    label: "Updates",    icon: "\u{1F504}" },
     ]
 }
 
@@ -57,6 +59,7 @@ pub fn SettingsWindow() -> impl IntoView {
                     "saving"   => view! { <SavingSettings /> }.into_any(),
                     "preview"  => view! { <PreviewSettings /> }.into_any(),
                     "advanced" => view! { <AdvancedSettings /> }.into_any(),
+                    "updates"  => view! { <UpdateSettings /> }.into_any(),
                     _          => view! { <AppearanceSettings /> }.into_any(),
                 }}
             </main>

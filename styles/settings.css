@@ -242,3 +242,28 @@
 .settings-reset-btn:hover {
   background: var(--bg-tertiary);
 }
+
+.setting-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.setting-btn:hover { background: var(--accent); color: var(--accent-fg); }
+
+.setting-check-result {
+  padding: var(--space-sm) 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.setting-value {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
