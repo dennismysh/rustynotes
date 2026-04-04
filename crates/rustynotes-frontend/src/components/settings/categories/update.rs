@@ -1,0 +1,95 @@
+//! Update settings panel — auto-update toggle, check for updates, version display.
+
+use leptos::prelude::*;
+use rustynotes_common::AppConfig;
+
+use crate::components::settings::shared::SettingRow;
+use crate::tauri_ipc;
+
+#[component]
+pub fn UpdateSettings() -> impl IntoView {
+    let config = RwSignal::new(Option::<AppConfig>::None);
+    let current_version = RwSignal::new(String::new());
+    let check_result = RwSignal::new(Option::<String>::None);
+
+    Effect::new(move |_| {
+        leptos::task::spawn_local(async move {
+            if let Ok(c) = tauri_ipc::get_config().await {
+                config.set(Some(c));
+            }
+            if let Ok(v) = tauri_ipc::get_current_version().await {
+                current_version.set(v);
+            }
+        });
+    });
+
+    let update = move |updater: Box<dyn FnOnce(&mut AppConfig)>| {
+        if let Some(mut c) = config.get_untracked() {
+            updater(&mut c);
+            config.set(Some(c.clone()));
+            leptos::task::spawn_local(async move {
+                if let Err(e) = tauri_ipc::save_config_cmd(c).await {
+                    web_sys::console::error_1(&format!("save_config: {e}").into());
+                }
+            });
+        }
+    };
+
+    let auto_update = Signal::derive(move || {
+        config.get().map(|c| c.auto_update).unwrap_or(true)
+    });
+
+    let handle_check = move |_| {
+        check_result.set(Some("Checking...".to_string()));
+        leptos::task::spawn_local(async move {
+            match tauri_ipc::check_for_update_cmd().await {
+                Ok(Some(version)) => {
+                    check_result.set(Some(format!("v{version} available!")));
+                }
+                Ok(None) => {
+                    check_result.set(Some("You're up to date.".to_string()));
+                }
+                Err(e) => {
+                    check_result.set(Some(format!("Error: {e}")));
+                }
+            }
+        });
+    };
+
+    view! {
+        <div class="settings-category">
+            <h2 class="settings-category-title">"Updates"</h2>
+            <p class="settings-category-subtitle">"Keep RustyNotes up to date"</p>
+
+            <SettingRow label="Current version" description="">
+                <span class="setting-value">{move || current_version.get()}</span>
+            </SettingRow>
+
+            <SettingRow label="Auto-update" description="Download and install updates silently, prompt only to restart">
+                <input
+                    type="checkbox"
+                    prop:checked=auto_update
+                    on:change=move |ev| {
+                        let checked = event_target_checked(&ev);
+                        update(Box::new(move |c| c.auto_update = checked));
+                    }
+                />
+            </SettingRow>
+
+            <SettingRow label="Check for updates" description="">
+                <button
+                    class="setting-btn"
+                    on:click=handle_check
+                >
+                    "Check now"
+                </button>
+            </SettingRow>
+
+            <Show when=move || check_result.get().is_some()>
+                <div class="setting-check-result">
+                    {move || check_result.get().unwrap_or_default()}
+                </div>
+            </Show>
+        </div>
+    }
+}

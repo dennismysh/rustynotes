@@ -42,6 +42,51 @@ pub fn Toolbar() -> impl IntoView {
     let state = use_app_state();
     let export_status = RwSignal::new(Option::<String>::None);
 
+    // Update banner state
+    let update_version = RwSignal::new(Option::<String>::None);
+    let update_status = RwSignal::new(String::from("idle"));
+
+    // Listen for update status events
+    tauri_ipc::listen_update_status(move |json| {
+        if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&json) {
+            if let Some(status) = parsed.get("status") {
+                if let Some(s) = status.as_str() {
+                    update_status.set(s.to_lowercase());
+                } else if let Some(obj) = status.as_object() {
+                    if let Some(v) = obj.get("Available").and_then(|v| v.get("version")).and_then(|v| v.as_str()) {
+                        update_version.set(Some(v.to_string()));
+                        update_status.set("available".to_string());
+                    } else if obj.contains_key("Error") {
+                        update_status.set("error".to_string());
+                    }
+                }
+            }
+        }
+    });
+
+    let handle_update_click = move |ev: web_sys::MouseEvent| {
+        ev.stop_propagation();
+        leptos::task::spawn_local(async move {
+            let _ = tauri_ipc::apply_update_cmd().await;
+        });
+    };
+
+    let handle_restart_click = move |ev: web_sys::MouseEvent| {
+        ev.stop_propagation();
+        leptos::task::spawn_local(async move {
+            let _ = tauri_ipc::restart_after_update_cmd().await;
+        });
+    };
+
+    let handle_dismiss_update = move |ev: web_sys::MouseEvent| {
+        ev.stop_propagation();
+        update_version.set(None);
+        update_status.set("idle".to_string());
+        leptos::task::spawn_local(async move {
+            let _ = tauri_ipc::dismiss_update_cmd().await;
+        });
+    };
+
     // Pull out the signals we need — RwSignal is Copy so these are cheap.
     let current_folder = state.current_folder;
     let file_tree = state.file_tree;
@@ -223,6 +268,43 @@ pub fn Toolbar() -> impl IntoView {
                 <button class="titlebar-btn maximize" on:click=handle_maximize aria-label="Maximize" />
             </div>
             <button on:click=handle_open_folder>"Open Folder"</button>
+            // Update banner
+            <Show when=move || {
+                let s = update_status.get();
+                s != "idle" && s != "checking"
+            }>
+                <div class="update-banner">
+                    {move || {
+                        let s = update_status.get();
+                        match s.as_str() {
+                            "available" => {
+                                let v = update_version.get().unwrap_or_default();
+                                view! {
+                                    <span class="update-text">{format!("v{v} available")}</span>
+                                    <button class="update-btn" on:click=handle_update_click>"Update"</button>
+                                    <button class="update-dismiss" on:click=handle_dismiss_update>{"\u{00D7}"}</button>
+                                }.into_any()
+                            }
+                            "downloading" => {
+                                view! { <span class="update-text">"Downloading..."</span> }.into_any()
+                            }
+                            "installing" => {
+                                view! { <span class="update-text">"Installing..."</span> }.into_any()
+                            }
+                            "ready" => {
+                                view! {
+                                    <span class="update-text">"Update ready"</span>
+                                    <button class="update-btn" on:click=handle_restart_click>"Restart"</button>
+                                }.into_any()
+                            }
+                            "error" => {
+                                view! { <span class="update-text update-error">"Update failed"</span> }.into_any()
+                            }
+                            _ => view! { <span /> }.into_any()
+                        }
+                    }}
+                </div>
+            </Show>
             <div class="spacer" />
             <Show when=move || active_filename.get().is_some() || active_file_path.get().is_none()>
                 <div class="toolbar-filename">
