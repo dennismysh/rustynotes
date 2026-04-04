@@ -125,6 +125,10 @@ pub struct AppConfig {
     pub save_mode: SaveMode,
     #[serde(default = "default_auto_save_delay_ms")]
     pub auto_save_delay_ms: u64,
+    #[serde(default = "default_true")]
+    pub auto_update: bool,
+    #[serde(default)]
+    pub last_updated_version: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -213,6 +217,8 @@ impl Default for AppConfig {
             recent_folders: Vec::new(),
             save_mode: SaveMode::default(),
             auto_save_delay_ms: default_auto_save_delay_ms(),
+            auto_update: true,
+            last_updated_version: None,
         }
     }
 }
