@@ -8,6 +8,7 @@ mod updater;
 mod binary_watcher;
 
 use std::sync::Mutex;
+use tauri::{Emitter, Manager};
 
 struct WatcherState {
     _watcher: Mutex<Option<notify::RecommendedWatcher>>,
@@ -47,6 +48,7 @@ pub fn run() {
         .manage(commands::config::ConfigState {
             config: Mutex::new(config::load_config()),
         })
+        .manage(commands::update::UpdateState::new())
         .invoke_handler(tauri::generate_handler![
             commands::fs::read_file,
             commands::fs::write_file,
@@ -59,7 +61,90 @@ pub fn run() {
             commands::export::export_file,
             commands::markdown::parse_markdown,
             watch_folder,
+            commands::update::check_for_update,
+            commands::update::apply_update,
+            commands::update::restart_after_update,
+            commands::update::get_update_status,
+            commands::update::get_current_version,
+            commands::update::dismiss_update,
         ])
+        .setup(|app| {
+            let app_handle = app.handle().clone();
+
+            // Background update check on startup + periodic (every 6 hours)
+            std::thread::spawn(move || {
+                loop {
+                    let config_state = app_handle.state::<commands::config::ConfigState>();
+                    let update_state = app_handle.state::<commands::update::UpdateState>();
+                    let last_updated = config_state
+                        .config
+                        .lock()
+                        .unwrap()
+                        .last_updated_version
+                        .clone();
+
+                    if let Some(info) = updater::check_for_update(last_updated.as_deref()) {
+                        *update_state.available.lock().unwrap() = Some(info.clone());
+                        let status = updater::UpdateStatus::Available {
+                            version: info.version.clone(),
+                        };
+                        *update_state.status.lock().unwrap() = status.clone();
+                        let _ = app_handle.emit("update-status", commands::update::StatusEvent {
+                            status,
+                        });
+
+                        let auto_update = config_state.config.lock().unwrap().auto_update;
+                        if auto_update {
+                            *update_state.update_in_progress.lock().unwrap() = true;
+                            {
+                                let mut config = config_state.config.lock().unwrap();
+                                config.last_updated_version = Some(info.version.clone());
+                                let _ = crate::config::save_config(&config);
+                            }
+
+                            let _ = app_handle.emit("update-status", commands::update::StatusEvent {
+                                status: updater::UpdateStatus::Downloading,
+                            });
+
+                            match updater::download_and_install(&info.download_url) {
+                                Ok(()) => {
+                                    let _ = app_handle.emit("update-status", commands::update::StatusEvent {
+                                        status: updater::UpdateStatus::Ready,
+                                    });
+                                }
+                                Err(e) => {
+                                    let _ = app_handle.emit("update-status", commands::update::StatusEvent {
+                                        status: updater::UpdateStatus::Error(e),
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    std::thread::sleep(std::time::Duration::from_secs(6 * 60 * 60));
+                }
+            });
+
+            // Binary self-watch
+            if let Some(mut watcher) = binary_watcher::BinaryWatcher::start() {
+                let app_handle2 = app.handle().clone();
+                std::thread::spawn(move || {
+                    loop {
+                        if watcher.poll() {
+                            let update_state = app_handle2.state::<commands::update::UpdateState>();
+                            let in_progress = *update_state.update_in_progress.lock().unwrap();
+                            if !in_progress {
+                                let _ = updater::relaunch();
+                                std::process::exit(0);
+                            }
+                        }
+                        std::thread::sleep(std::time::Duration::from_millis(250));
+                    }
+                });
+            }
+
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
