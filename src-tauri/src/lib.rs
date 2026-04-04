@@ -4,6 +4,7 @@ mod export;
 mod fs_ops;
 mod markdown_parser;
 mod watcher;
+mod updater;
 
 use std::sync::Mutex;
 
