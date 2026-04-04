@@ -5,6 +5,7 @@ mod fs_ops;
 mod markdown_parser;
 mod watcher;
 mod updater;
+mod binary_watcher;
 
 use std::sync::Mutex;
 
