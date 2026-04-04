@@ -43,36 +43,9 @@ jobs:
         with:
           workspaces: src-tauri
 
-      # ── Build both architectures ───────────────────────────────
-      - name: Build WASM frontend
-        run: trunk build --release
-
-      - name: Build Rust backend (aarch64)
-        run: cargo build --release --target aarch64-apple-darwin --manifest-path src-tauri/Cargo.toml
-
-      - name: Build Rust backend (x86_64)
-        run: cargo build --release --target x86_64-apple-darwin --manifest-path src-tauri/Cargo.toml
-
-      - name: Create universal binary
-        run: |
-          lipo -create \
-            target/aarch64-apple-darwin/release/rustynotes \
-            target/x86_64-apple-darwin/release/rustynotes \
-            -output target/release/rustynotes-universal
-
-          file target/release/rustynotes-universal
-
-      - name: Bundle universal .app
-        run: |
-          # Build normally to get the .app bundle structure
-          pnpm tauri build
-
-          # Replace the binary with the universal one
-          cp target/release/rustynotes-universal \
-            target/release/bundle/macos/rustynotes.app/Contents/MacOS/rustynotes
-
-          echo "Universal binary installed in .app bundle"
-          file target/release/bundle/macos/rustynotes.app/Contents/MacOS/rustynotes
+      # ── Build universal binary via Tauri ────────────────────────
+      - name: Build Tauri app (universal)
+        run: pnpm tauri build --target universal-apple-darwin
 
       # ── 1. Import signing certificate ──────────────────────────
       - name: Import signing certificate
@@ -111,7 +84,7 @@ jobs:
       # ── 2. Sign the .app bundle ────────────────────────────────
       - name: Sign .app bundle
         run: |
-          APP_PATH="target/release/bundle/macos/rustynotes.app"
+          APP_PATH="target/universal-apple-darwin/release/bundle/macos/rustynotes.app"
           ENTITLEMENTS="resources/rustynotes.entitlements"
           IDENTITY=$(security find-identity -v -p codesigning \
             | grep "Developer ID Application" | head -1 \
@@ -140,7 +113,7 @@ jobs:
           NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
           NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
         run: |
-          APP_PATH="target/release/bundle/macos/rustynotes.app"
+          APP_PATH="target/universal-apple-darwin/release/bundle/macos/rustynotes.app"
           NOTARY_KEY_PATH="$RUNNER_TEMP/notary-key.p8"
           echo "$NOTARY_KEY_BASE64" | base64 --decode > "$NOTARY_KEY_PATH"
 
@@ -160,7 +133,7 @@ jobs:
         run: |
           brew install create-dmg
           TAG="${GITHUB_REF#refs/tags/}"
-          APP_PATH="target/release/bundle/macos/rustynotes.app"
+          APP_PATH="target/universal-apple-darwin/release/bundle/macos/rustynotes.app"
 
           create-dmg \
             --volname "RustyNotes" \
