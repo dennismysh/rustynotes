@@ -290,6 +290,55 @@ pub fn start_dragging() {
 }
 
 // ---------------------------------------------------------------------------
+// Update commands
+// ---------------------------------------------------------------------------
+
+pub async fn check_for_update_cmd() -> Result<Option<String>, String> {
+    let val = tauri_invoke_no_args("check_for_update").await?;
+    if val.is_null() || val.is_undefined() {
+        Ok(None)
+    } else {
+        let version = js_sys::Reflect::get(&val, &"version".into())
+            .ok()
+            .and_then(|v| v.as_string());
+        Ok(version)
+    }
+}
+
+pub async fn apply_update_cmd() -> Result<(), String> {
+    tauri_invoke_no_args("apply_update").await?;
+    Ok(())
+}
+
+pub async fn restart_after_update_cmd() -> Result<(), String> {
+    tauri_invoke_no_args("restart_after_update").await?;
+    Ok(())
+}
+
+pub async fn get_current_version() -> Result<String, String> {
+    let val = tauri_invoke_no_args("get_current_version").await?;
+    val.as_string()
+        .ok_or_else(|| "get_current_version: expected string".to_string())
+}
+
+pub async fn dismiss_update_cmd() -> Result<(), String> {
+    tauri_invoke_no_args("dismiss_update").await?;
+    Ok(())
+}
+
+pub fn listen_update_status(callback: impl Fn(String) + 'static) {
+    listen_event("update-status", move |payload: JsValue| {
+        if let Ok(inner) = reflect_get(&payload, "payload") {
+            if let Ok(json) = js_sys::JSON::stringify(&inner) {
+                if let Some(s) = json.as_string() {
+                    callback(s);
+                }
+            }
+        }
+    });
+}
+
+// ---------------------------------------------------------------------------
 // Event listeners (app-lifetime — closures are `.forget()`-ed)
 // ---------------------------------------------------------------------------
 
