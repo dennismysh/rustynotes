@@ -3,6 +3,8 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::KeyboardEvent;
 
+use rustynotes_common::EditorMode;
+
 use crate::state::{use_app_state, SaveStatus};
 use crate::tauri_ipc;
 
@@ -95,6 +97,7 @@ pub fn Toolbar() -> impl IntoView {
     let is_dirty = state.is_dirty;
     let show_search = state.show_search;
     let save_status = state.save_status;
+    let editor_mode = state.editor_mode;
 
     // Derived: active filename (just the basename, e.g. "notes.md")
     let active_filename = Memo::new(move |_| {
@@ -347,6 +350,36 @@ pub fn Toolbar() -> impl IntoView {
                 </div>
             </Show>
             <div class="spacer" />
+            <div class="mode-switcher">
+                <button
+                    class:active=move || editor_mode.get() == EditorMode::Source
+                    on:click=move |_| editor_mode.set(EditorMode::Source)
+                    title="Source (\u{2318}1)"
+                >
+                    "Source"
+                </button>
+                <button
+                    class:active=move || editor_mode.get() == EditorMode::Wysiwyg
+                    on:click=move |_| editor_mode.set(EditorMode::Wysiwyg)
+                    title="Rich Text (\u{2318}2)"
+                >
+                    "Rich"
+                </button>
+                <button
+                    class:active=move || editor_mode.get() == EditorMode::Split
+                    on:click=move |_| editor_mode.set(EditorMode::Split)
+                    title="Split View (\u{2318}3)"
+                >
+                    "Split"
+                </button>
+                <button
+                    class:active=move || editor_mode.get() == EditorMode::Preview
+                    on:click=move |_| editor_mode.set(EditorMode::Preview)
+                    title="Preview (\u{2318}4)"
+                >
+                    "Preview"
+                </button>
+            </div>
             <Show when=move || export_status.get().is_some()>
                 <span class="toolbar-status">
                     {move || export_status.get().unwrap_or_default()}

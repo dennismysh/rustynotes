@@ -236,6 +236,31 @@ body, #root, main {
 .toolbar .toolbar-icon-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .toolbar .toolbar-icon-btn.active { color: var(--accent); }
 
+/* Mode Switcher — overrides generic .toolbar button styles */
+.mode-switcher {
+  display: flex;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.toolbar .mode-switcher button {
+  border: none;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  color: var(--text-secondary);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.toolbar .mode-switcher button:last-child { border-right: none; }
+.toolbar .mode-switcher button:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.toolbar .mode-switcher button.active { border-color: var(--border); }
+
 /* Update banner */
 .update-banner {
   display: flex;
@@ -345,31 +370,37 @@ body, #root, main {
 .tree-children { padding-left: 0; }
 
 /* ===== Shared Markdown Content ===== */
+/* These rules apply to both the Comrak preview (.markdown-content)
+   and the TipTap WYSIWYG editor (.wysiwyg-editor .tiptap) so that
+   switching between Rich / Split / Preview looks consistent. */
 
 .markdown-content h1, .markdown-content h2, .markdown-content h3,
-.markdown-content h4, .markdown-content h5, .markdown-content h6 {
+.markdown-content h4, .markdown-content h5, .markdown-content h6,
+.wysiwyg-editor .tiptap h1, .wysiwyg-editor .tiptap h2, .wysiwyg-editor .tiptap h3,
+.wysiwyg-editor .tiptap h4, .wysiwyg-editor .tiptap h5, .wysiwyg-editor .tiptap h6 {
   line-height: 1.25;
 }
 
-.markdown-content h1 { font-size: 2.2em; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin: 1.2em 0 0.5em; }
-.markdown-content h2 { font-size: 1.65em; font-weight: 600; letter-spacing: -0.01em; margin: 1.4em 0 0.45em; }
-.markdown-content h3 { font-size: 1.3em; font-weight: 600; margin: 1.3em 0 0.4em; }
-.markdown-content h4 { font-size: 1.1em; font-weight: 600; margin: 1.2em 0 0.35em; }
-.markdown-content h5 { font-size: 0.9em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin: 1.2em 0 0.35em; }
-.markdown-content h6 { font-size: 0.85em; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.03em; margin: 1.2em 0 0.35em; }
-.markdown-content p { margin: 0.85em 0; }
-.markdown-content ul, .markdown-content ol { margin: 0.85em 0; padding-left: 2em; }
+.markdown-content h1, .wysiwyg-editor .tiptap h1 { font-size: 2.2em; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin: 1.2em 0 0.5em; }
+.markdown-content h2, .wysiwyg-editor .tiptap h2 { font-size: 1.65em; font-weight: 600; letter-spacing: -0.01em; margin: 1.4em 0 0.45em; }
+.markdown-content h3, .wysiwyg-editor .tiptap h3 { font-size: 1.3em; font-weight: 600; margin: 1.3em 0 0.4em; }
+.markdown-content h4, .wysiwyg-editor .tiptap h4 { font-size: 1.1em; font-weight: 600; margin: 1.2em 0 0.35em; }
+.markdown-content h5, .wysiwyg-editor .tiptap h5 { font-size: 0.9em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin: 1.2em 0 0.35em; }
+.markdown-content h6, .wysiwyg-editor .tiptap h6 { font-size: 0.85em; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.03em; margin: 1.2em 0 0.35em; }
+.markdown-content p, .wysiwyg-editor .tiptap p { margin: 0.85em 0; }
+.markdown-content ul, .markdown-content ol,
+.wysiwyg-editor .tiptap ul, .wysiwyg-editor .tiptap ol { margin: 0.85em 0; padding-left: 2em; }
 
 /* First child in content should not have top margin */
-.markdown-content > :first-child { margin-top: 0; }
-.markdown-content code {
+.markdown-content > :first-child, .wysiwyg-editor .tiptap > :first-child { margin-top: 0; }
+.markdown-content code, .wysiwyg-editor .tiptap code {
   background: var(--bg-tertiary);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: var(--font-mono);
   font-size: 0.9em;
 }
-.markdown-content pre {
+.markdown-content pre, .wysiwyg-editor .tiptap pre {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -377,25 +408,26 @@ body, #root, main {
   overflow-x: auto;
   margin: 1em 0;
 }
-.markdown-content pre code { background: none; padding: 0; }
-.markdown-content blockquote {
+.markdown-content pre code, .wysiwyg-editor .tiptap pre code { background: none; padding: 0; }
+.markdown-content blockquote, .wysiwyg-editor .tiptap blockquote {
   border-left: 3px solid var(--accent);
   padding-left: 16px;
   color: var(--text-secondary);
   font-style: italic;
   margin: 1em 0;
 }
-.markdown-content a { color: var(--accent); text-decoration: none; }
-.markdown-content a:hover { text-decoration: underline; }
-.markdown-content table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-.markdown-content th, .markdown-content td {
+.markdown-content a, .wysiwyg-editor .tiptap a { color: var(--accent); text-decoration: none; }
+.markdown-content a:hover, .wysiwyg-editor .tiptap a:hover { text-decoration: underline; }
+.markdown-content table, .wysiwyg-editor .tiptap table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+.markdown-content th, .markdown-content td,
+.wysiwyg-editor .tiptap th, .wysiwyg-editor .tiptap td {
   border: 1px solid var(--border);
   padding: 8px 12px;
   text-align: left;
   font-variant-numeric: tabular-nums;
 }
-.markdown-content th { background: var(--bg-secondary); font-weight: 600; }
-.markdown-content img { max-width: 100%; }
+.markdown-content th, .wysiwyg-editor .tiptap th { background: var(--bg-secondary); font-weight: 600; }
+.markdown-content img, .wysiwyg-editor .tiptap img { max-width: 100%; }
 
 /* ===== Preview ===== */
 
@@ -403,6 +435,10 @@ body, #root, main {
   padding: var(--space-xl) 40px var(--space-lg);
   overflow-y: auto;
   height: 100%;
+  font-family: var(--font-body);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  color: var(--text-primary);
 }
 
 /* ===== Empty State ===== */
@@ -612,8 +648,8 @@ body, #root, main {
 /* ===== CodeMirror ===== */
 
 .source-editor { height: 100%; overflow: hidden; }
-.cm-editor { height: 100%; font-family: var(--font-mono); font-size: 14px; }
-.cm-editor .cm-content { padding: 16px 24px; }
+.cm-editor { height: 100%; font-family: var(--font-mono); font-size: var(--font-size); line-height: var(--line-height); }
+.cm-editor .cm-content { padding: var(--space-xl) 40px var(--space-lg); }
 .cm-editor .cm-gutters {
   background: var(--bg-secondary);
   border-right: 1px solid var(--border);
@@ -690,7 +726,7 @@ body, #root, main {
 }
 
 .split-pane-right .preview-container {
-  padding: var(--space-xl) var(--space-lg);
+  padding: var(--space-xl) var(--space-lg) var(--space-lg);
 }
 
 /* ===== Admonitions / GitHub-style Alerts ===== */
