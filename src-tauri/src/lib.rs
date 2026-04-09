@@ -74,63 +74,24 @@ pub fn run() {
             // Background update check on startup + periodic (every 6 hours)
             std::thread::spawn(move || {
                 loop {
-                    let config_state = app_handle.state::<commands::config::ConfigState>();
                     let update_state = app_handle.state::<commands::update::UpdateState>();
-                    let dismissed = config_state
-                        .config
-                        .lock()
-                        .unwrap()
-                        .dismissed_version
-                        .clone();
+                    let config_state = app_handle.state::<commands::config::ConfigState>();
 
-                    let check_result = updater::check_for_update();
-                    let maybe_info = match check_result {
-                        Ok(Some(info)) => {
-                            if dismissed.as_deref() == Some(info.version.as_str()) {
-                                None
-                            } else {
-                                Some(info)
-                            }
-                        }
-                        Ok(None) => None,
-                        Err(_) => None,
-                    };
+                    if let Some(info) = commands::update::perform_check(&app_handle, &update_state) {
+                        let dismissed = config_state
+                            .config
+                            .lock()
+                            .unwrap()
+                            .dismissed_version
+                            .clone();
 
-                    if let Some(info) = maybe_info {
-                        *update_state.available.lock().unwrap() = Some(info.clone());
-                        let status = updater::UpdateStatus::Available {
-                            version: info.version.clone(),
-                        };
-                        *update_state.status.lock().unwrap() = status.clone();
-                        let _ = app_handle.emit("update-status", commands::update::StatusEvent {
-                            status,
-                        });
+                        // Skip if user dismissed this version
+                        let is_dismissed = dismissed.as_deref() == Some(info.version.as_str());
 
                         let auto_update = config_state.config.lock().unwrap().auto_update;
-                        if auto_update {
-                            *update_state.update_in_progress.lock().unwrap() = true;
-                            {
-                                let mut config = config_state.config.lock().unwrap();
-                                config.dismissed_version = Some(info.version.clone());
-                                let _ = crate::config::save_config(&config);
-                            }
 
-                            let _ = app_handle.emit("update-status", commands::update::StatusEvent {
-                                status: updater::UpdateStatus::Downloading,
-                            });
-
-                            match updater::download_and_install(&info.download_url, &info.version) {
-                                Ok(()) => {
-                                    let _ = app_handle.emit("update-status", commands::update::StatusEvent {
-                                        status: updater::UpdateStatus::Ready,
-                                    });
-                                }
-                                Err(e) => {
-                                    let _ = app_handle.emit("update-status", commands::update::StatusEvent {
-                                        status: updater::UpdateStatus::Error(e.to_string()),
-                                    });
-                                }
-                            }
+                        if auto_update && !is_dismissed {
+                            commands::update::perform_install(&app_handle, &update_state, &info);
                         }
                     }
 
