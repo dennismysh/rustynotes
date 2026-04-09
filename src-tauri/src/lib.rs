@@ -8,7 +8,7 @@ mod updater;
 mod binary_watcher;
 
 use std::sync::Mutex;
-use tauri::{Emitter, Manager};
+use tauri::Manager;
 
 struct WatcherState {
     _watcher: Mutex<Option<notify::RecommendedWatcher>>,
@@ -77,7 +77,7 @@ pub fn run() {
                     let update_state = app_handle.state::<commands::update::UpdateState>();
                     let config_state = app_handle.state::<commands::config::ConfigState>();
 
-                    if let Some(info) = commands::update::perform_check(&app_handle, &update_state) {
+                    if let Ok(Some(info)) = commands::update::perform_check(&app_handle, &update_state) {
                         let dismissed = config_state
                             .config
                             .lock()
@@ -87,6 +87,13 @@ pub fn run() {
 
                         // Skip if user dismissed this version
                         let is_dismissed = dismissed.as_deref() == Some(info.version.as_str());
+
+                        // Clear stale dismissed_version if a newer version appeared
+                        if !is_dismissed && dismissed.is_some() {
+                            let mut config = config_state.config.lock().unwrap();
+                            config.dismissed_version = None;
+                            let _ = crate::config::save_config(&config);
+                        }
 
                         let auto_update = config_state.config.lock().unwrap().auto_update;
 

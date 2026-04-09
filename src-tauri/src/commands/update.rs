@@ -31,12 +31,12 @@ fn emit_status(app: &AppHandle, status: UpdateStatus) {
 }
 
 /// Shared update check logic used by both the background thread and IPC command.
-/// Returns the UpdateInfo if an update is available, or None if up to date.
-/// Errors are emitted as UpdateStatus::Error events.
+/// Returns Ok(Some(info)) if an update is available, Ok(None) if up to date,
+/// or Err(msg) if the check failed (error is also emitted as UpdateStatus::Error).
 pub fn perform_check(
     app: &AppHandle,
     state: &UpdateState,
-) -> Option<UpdateInfo> {
+) -> Result<Option<UpdateInfo>, String> {
     *state.status.lock().unwrap() = UpdateStatus::Checking;
     emit_status(app, UpdateStatus::Checking);
 
@@ -48,18 +48,19 @@ pub fn perform_check(
             };
             *state.status.lock().unwrap() = status.clone();
             emit_status(app, status);
-            Some(info)
+            Ok(Some(info))
         }
         Ok(None) => {
             *state.status.lock().unwrap() = UpdateStatus::Idle;
             emit_status(app, UpdateStatus::Idle);
-            None
+            Ok(None)
         }
         Err(e) => {
-            let status = UpdateStatus::Error(e.to_string());
+            let msg = e.to_string();
+            let status = UpdateStatus::Error(msg.clone());
             *state.status.lock().unwrap() = status.clone();
             emit_status(app, status);
-            None
+            Err(msg)
         }
     }
 }
@@ -92,7 +93,7 @@ pub fn perform_install(
 pub fn check_for_update(
     app: AppHandle,
     state: tauri::State<UpdateState>,
-) -> Option<UpdateInfo> {
+) -> Result<Option<UpdateInfo>, String> {
     perform_check(&app, &state)
 }
 
