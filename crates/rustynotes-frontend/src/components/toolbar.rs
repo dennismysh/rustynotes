@@ -47,6 +47,7 @@ pub fn Toolbar() -> impl IntoView {
     // Update banner state
     let update_version = RwSignal::new(Option::<String>::None);
     let update_status = RwSignal::new(String::from("idle"));
+    let update_error_msg = RwSignal::new(Option::<String>::None);
 
     // Listen for update status events
     tauri_ipc::listen_update_status(move |json| {
@@ -54,11 +55,16 @@ pub fn Toolbar() -> impl IntoView {
             if let Some(status) = parsed.get("status") {
                 if let Some(s) = status.as_str() {
                     update_status.set(s.to_lowercase());
+                    if s != "Error" {
+                        update_error_msg.set(None);
+                    }
                 } else if let Some(obj) = status.as_object() {
                     if let Some(v) = obj.get("Available").and_then(|v| v.get("version")).and_then(|v| v.as_str()) {
                         update_version.set(Some(v.to_string()));
                         update_status.set("available".to_string());
-                    } else if obj.contains_key("Error") {
+                        update_error_msg.set(None);
+                    } else if let Some(msg) = obj.get("Error").and_then(|v| v.as_str()) {
+                        update_error_msg.set(Some(msg.to_string()));
                         update_status.set("error".to_string());
                     }
                 }
@@ -301,7 +307,8 @@ pub fn Toolbar() -> impl IntoView {
                                 }.into_any()
                             }
                             "error" => {
-                                view! { <span class="update-text update-error">"Update failed"</span> }.into_any()
+                                let msg = update_error_msg.get().unwrap_or_else(|| "Update failed".to_string());
+                                view! { <span class="update-text update-error">{msg}</span> }.into_any()
                             }
                             _ => view! { <span /> }.into_any()
                         }
