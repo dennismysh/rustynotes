@@ -39,12 +39,16 @@ pub fn UpdateSettings() -> impl IntoView {
         config.get().map(|c| c.auto_update).unwrap_or(true)
     });
 
+    let available_version = RwSignal::new(Option::<String>::None);
+
     let handle_check = move |_| {
         check_result.set(Some("Checking...".to_string()));
+        available_version.set(None);
         leptos::task::spawn_local(async move {
             match tauri_ipc::check_for_update_cmd().await {
                 Ok(Some(version)) => {
                     check_result.set(Some(format!("v{version} available!")));
+                    available_version.set(Some(version));
                 }
                 Ok(None) => {
                     check_result.set(Some("You're up to date.".to_string()));
@@ -52,6 +56,16 @@ pub fn UpdateSettings() -> impl IntoView {
                 Err(e) => {
                     check_result.set(Some(format!("Error: {e}")));
                 }
+            }
+        });
+    };
+
+    let handle_update = move |_| {
+        check_result.set(Some("Updating...".to_string()));
+        available_version.set(None);
+        leptos::task::spawn_local(async move {
+            if let Err(e) = tauri_ipc::apply_update_cmd().await {
+                check_result.set(Some(format!("Error: {e}")));
             }
         });
     };
@@ -88,6 +102,15 @@ pub fn UpdateSettings() -> impl IntoView {
             <Show when=move || check_result.get().is_some()>
                 <div class="setting-check-result">
                     {move || check_result.get().unwrap_or_default()}
+                    <Show when=move || available_version.get().is_some()>
+                        <button
+                            class="setting-btn"
+                            style="margin-left: 8px;"
+                            on:click=handle_update
+                        >
+                            "Update"
+                        </button>
+                    </Show>
                 </div>
             </Show>
         </div>
