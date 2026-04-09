@@ -39,14 +39,30 @@ pub fn check_for_update(
     *state.status.lock().unwrap() = UpdateStatus::Checking;
     emit_status(&app, UpdateStatus::Checking);
 
-    let last_updated = config_state
+    let dismissed = config_state
         .config
         .lock()
         .unwrap()
-        .last_updated_version
+        .dismissed_version
         .clone();
 
-    let result = updater::check_for_update(last_updated.as_deref());
+    let result = match updater::check_for_update() {
+        Ok(Some(info)) => {
+            // Suppress if user already dismissed this version
+            if dismissed.as_deref() == Some(info.version.as_str()) {
+                None
+            } else {
+                Some(info)
+            }
+        }
+        Ok(None) => None,
+        Err(e) => {
+            let status = UpdateStatus::Error(e.to_string());
+            *state.status.lock().unwrap() = status.clone();
+            emit_status(&app, status);
+            return None;
+        }
+    };
 
     if let Some(ref info) = result {
         *state.available.lock().unwrap() = Some(info.clone());
@@ -80,7 +96,7 @@ pub fn apply_update(
 
     {
         let mut config = config_state.config.lock().unwrap();
-        config.last_updated_version = Some(info.version.clone());
+        config.dismissed_version = Some(info.version.clone());
         let _ = crate::config::save_config(&config);
     }
 
@@ -126,7 +142,7 @@ pub fn dismiss_update(
 ) {
     if let Some(info) = state.available.lock().unwrap().take() {
         let mut config = config_state.config.lock().unwrap();
-        config.last_updated_version = Some(info.version);
+        config.dismissed_version = Some(info.version);
         let _ = crate::config::save_config(&config);
     }
     *state.status.lock().unwrap() = UpdateStatus::Idle;

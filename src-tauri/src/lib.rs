@@ -76,14 +76,27 @@ pub fn run() {
                 loop {
                     let config_state = app_handle.state::<commands::config::ConfigState>();
                     let update_state = app_handle.state::<commands::update::UpdateState>();
-                    let last_updated = config_state
+                    let dismissed = config_state
                         .config
                         .lock()
                         .unwrap()
-                        .last_updated_version
+                        .dismissed_version
                         .clone();
 
-                    if let Some(info) = updater::check_for_update(last_updated.as_deref()) {
+                    let check_result = updater::check_for_update();
+                    let maybe_info = match check_result {
+                        Ok(Some(info)) => {
+                            if dismissed.as_deref() == Some(info.version.as_str()) {
+                                None
+                            } else {
+                                Some(info)
+                            }
+                        }
+                        Ok(None) => None,
+                        Err(_) => None,
+                    };
+
+                    if let Some(info) = maybe_info {
                         *update_state.available.lock().unwrap() = Some(info.clone());
                         let status = updater::UpdateStatus::Available {
                             version: info.version.clone(),
@@ -98,7 +111,7 @@ pub fn run() {
                             *update_state.update_in_progress.lock().unwrap() = true;
                             {
                                 let mut config = config_state.config.lock().unwrap();
-                                config.last_updated_version = Some(info.version.clone());
+                                config.dismissed_version = Some(info.version.clone());
                                 let _ = crate::config::save_config(&config);
                             }
 
