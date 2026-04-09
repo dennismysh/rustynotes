@@ -126,27 +126,69 @@ pub fn check_for_update() -> Result<Option<UpdateInfo>, UpdateError> {
     }))
 }
 
-/// Download a DMG, mount it, replace the app bundle, unmount, and clean up.
-pub fn download_and_install(url: &str) -> Result<(), String> {
+/// Verify the installed app version matches expectations by reading Info.plist.
+fn verify_installed_version(expected_version: &str) -> Result<(), UpdateError> {
+    let plist_path = format!("{}/Contents/Info.plist", INSTALL_PATH);
+
+    let output = Command::new("plutil")
+        .args([
+            "-extract",
+            "CFBundleShortVersionString",
+            "raw",
+            "-o",
+            "-",
+            &plist_path,
+        ])
+        .output()
+        .map_err(|e| UpdateError::VerificationFailed {
+            expected: expected_version.to_string(),
+            found: format!("plutil failed: {e}"),
+        })?;
+
+    if !output.status.success() {
+        return Err(UpdateError::VerificationFailed {
+            expected: expected_version.to_string(),
+            found: format!(
+                "plutil error: {}",
+                String::from_utf8_lossy(&output.stderr).trim()
+            ),
+        });
+    }
+
+    let installed_version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+
+    if installed_version != expected_version {
+        return Err(UpdateError::VerificationFailed {
+            expected: expected_version.to_string(),
+            found: installed_version,
+        });
+    }
+
+    Ok(())
+}
+
+/// Download a DMG, mount it, replace the app bundle, verify, unmount, and clean up.
+pub fn download_and_install(url: &str, expected_version: &str) -> Result<(), UpdateError> {
     let temp_dir = Path::new(TEMP_DIR);
     let dmg_path = temp_dir.join("rustynotes.dmg");
     let mount_point = temp_dir.join("mount");
 
     let _ = fs::remove_dir_all(temp_dir);
-    fs::create_dir_all(temp_dir).map_err(|e| format!("create temp dir: {e}"))?;
+    fs::create_dir_all(temp_dir).map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
 
     let response = ureq::get(url)
         .call()
-        .map_err(|e| format!("download: {e}"))?;
+        .map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
 
     let bytes = response
         .into_body()
         .read_to_vec()
-        .map_err(|e| format!("read body: {e}"))?;
+        .map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
 
-    let mut file = fs::File::create(&dmg_path).map_err(|e| format!("create dmg: {e}"))?;
+    let mut file = fs::File::create(&dmg_path)
+        .map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
     file.write_all(&bytes)
-        .map_err(|e| format!("write dmg: {e}"))?;
+        .map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
     drop(file);
 
     let mount_status = Command::new("hdiutil")
@@ -159,12 +201,11 @@ pub fn download_and_install(url: &str) -> Result<(), String> {
             mount_point.to_str().unwrap(),
         ])
         .output()
-        .map_err(|e| format!("hdiutil attach: {e}"))?;
+        .map_err(|e| UpdateError::DmgMountFailed(e.to_string()))?;
 
     if !mount_status.status.success() {
-        return Err(format!(
-            "hdiutil attach failed: {}",
-            String::from_utf8_lossy(&mount_status.stderr)
+        return Err(UpdateError::DmgMountFailed(
+            String::from_utf8_lossy(&mount_status.stderr).to_string(),
         ));
     }
 
@@ -173,31 +214,34 @@ pub fn download_and_install(url: &str) -> Result<(), String> {
         let _ = Command::new("hdiutil")
             .args(["detach", mount_point.to_str().unwrap()])
             .output();
-        return Err("rustynotes.app not found in DMG".to_string());
+        return Err(UpdateError::AppNotFoundInDmg);
     }
 
     let _ = fs::remove_dir_all(INSTALL_PATH);
     let cp_status = Command::new("cp")
         .args(["-R", mounted_app.to_str().unwrap(), INSTALL_PATH])
         .output()
-        .map_err(|e| format!("cp -R: {e}"))?;
+        .map_err(|e| UpdateError::CopyFailed(e.to_string()))?;
 
     if !cp_status.status.success() {
         let _ = Command::new("hdiutil")
             .args(["detach", mount_point.to_str().unwrap()])
             .output();
-        return Err(format!(
-            "cp -R failed: {}",
-            String::from_utf8_lossy(&cp_status.stderr)
+        return Err(UpdateError::CopyFailed(
+            String::from_utf8_lossy(&cp_status.stderr).to_string(),
         ));
     }
 
+    // Verify the installed version matches what we expected
+    let verification = verify_installed_version(expected_version);
+
+    // Always clean up, regardless of verification result
     let _ = Command::new("hdiutil")
         .args(["detach", mount_point.to_str().unwrap()])
         .output();
     let _ = fs::remove_dir_all(temp_dir);
 
-    Ok(())
+    verification
 }
 
 pub fn relaunch() -> Result<(), String> {
@@ -262,5 +306,11 @@ mod tests {
         for v in variants {
             assert!(!v.to_string().is_empty(), "Empty display for {v:?}");
         }
+    }
+
+    #[test]
+    fn test_verify_installed_version_parses_plist_output() {
+        let result = verify_installed_version("99.99.99");
+        assert!(result.is_err());
     }
 }

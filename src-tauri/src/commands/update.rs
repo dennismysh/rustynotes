@@ -106,12 +106,12 @@ pub fn apply_update(
     std::thread::spawn(move || {
         emit_status(&app_handle, UpdateStatus::Downloading);
 
-        match updater::download_and_install(&url) {
+        match updater::download_and_install(&url, &info.version) {
             Ok(()) => {
                 emit_status(&app_handle, UpdateStatus::Ready);
             }
             Err(e) => {
-                emit_status(&app_handle, UpdateStatus::Error(e));
+                emit_status(&app_handle, UpdateStatus::Error(e.to_string()));
             }
         }
     });

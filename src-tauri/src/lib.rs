@@ -119,7 +119,7 @@ pub fn run() {
                                 status: updater::UpdateStatus::Downloading,
                             });
 
-                            match updater::download_and_install(&info.download_url) {
+                            match updater::download_and_install(&info.download_url, &info.version) {
                                 Ok(()) => {
                                     let _ = app_handle.emit("update-status", commands::update::StatusEvent {
                                         status: updater::UpdateStatus::Ready,
@@ -127,7 +127,7 @@ pub fn run() {
                                 }
                                 Err(e) => {
                                     let _ = app_handle.emit("update-status", commands::update::StatusEvent {
-                                        status: updater::UpdateStatus::Error(e),
+                                        status: updater::UpdateStatus::Error(e.to_string()),
                                     });
                                 }
                             }
