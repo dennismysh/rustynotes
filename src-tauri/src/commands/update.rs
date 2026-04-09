@@ -1,7 +1,7 @@
 use crate::updater::{self, UpdateInfo, UpdateStatus};
 use serde::Serialize;
 use std::sync::Mutex;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 pub struct UpdateState {
     pub status: Mutex<UpdateStatus>,
@@ -30,60 +30,76 @@ fn emit_status(app: &AppHandle, status: UpdateStatus) {
     });
 }
 
+/// Shared update check logic used by both the background thread and IPC command.
+/// Returns the UpdateInfo if an update is available, or None if up to date.
+/// Errors are emitted as UpdateStatus::Error events.
+pub fn perform_check(
+    app: &AppHandle,
+    state: &UpdateState,
+) -> Option<UpdateInfo> {
+    *state.status.lock().unwrap() = UpdateStatus::Checking;
+    emit_status(app, UpdateStatus::Checking);
+
+    match updater::check_for_update() {
+        Ok(Some(info)) => {
+            *state.available.lock().unwrap() = Some(info.clone());
+            let status = UpdateStatus::Available {
+                version: info.version.clone(),
+            };
+            *state.status.lock().unwrap() = status.clone();
+            emit_status(app, status);
+            Some(info)
+        }
+        Ok(None) => {
+            *state.status.lock().unwrap() = UpdateStatus::Idle;
+            emit_status(app, UpdateStatus::Idle);
+            None
+        }
+        Err(e) => {
+            let status = UpdateStatus::Error(e.to_string());
+            *state.status.lock().unwrap() = status.clone();
+            emit_status(app, status);
+            None
+        }
+    }
+}
+
+/// Shared download+install logic used by both the background thread and IPC command.
+pub fn perform_install(
+    app: &AppHandle,
+    state: &UpdateState,
+    info: &UpdateInfo,
+) {
+    *state.update_in_progress.lock().unwrap() = true;
+    emit_status(app, UpdateStatus::Downloading);
+
+    match updater::download_and_install(&info.download_url, &info.version) {
+        Ok(()) => {
+            let status = UpdateStatus::Ready;
+            *state.status.lock().unwrap() = status.clone();
+            emit_status(app, status);
+        }
+        Err(e) => {
+            *state.update_in_progress.lock().unwrap() = false;
+            let status = UpdateStatus::Error(e.to_string());
+            *state.status.lock().unwrap() = status.clone();
+            emit_status(app, status);
+        }
+    }
+}
+
 #[tauri::command]
 pub fn check_for_update(
     app: AppHandle,
     state: tauri::State<UpdateState>,
-    config_state: tauri::State<crate::commands::config::ConfigState>,
 ) -> Option<UpdateInfo> {
-    *state.status.lock().unwrap() = UpdateStatus::Checking;
-    emit_status(&app, UpdateStatus::Checking);
-
-    let dismissed = config_state
-        .config
-        .lock()
-        .unwrap()
-        .dismissed_version
-        .clone();
-
-    let result = match updater::check_for_update() {
-        Ok(Some(info)) => {
-            // Suppress if user already dismissed this version
-            if dismissed.as_deref() == Some(info.version.as_str()) {
-                None
-            } else {
-                Some(info)
-            }
-        }
-        Ok(None) => None,
-        Err(e) => {
-            let status = UpdateStatus::Error(e.to_string());
-            *state.status.lock().unwrap() = status.clone();
-            emit_status(&app, status);
-            return None;
-        }
-    };
-
-    if let Some(ref info) = result {
-        *state.available.lock().unwrap() = Some(info.clone());
-        let status = UpdateStatus::Available {
-            version: info.version.clone(),
-        };
-        *state.status.lock().unwrap() = status.clone();
-        emit_status(&app, status);
-    } else {
-        *state.status.lock().unwrap() = UpdateStatus::Idle;
-        emit_status(&app, UpdateStatus::Idle);
-    }
-
-    result
+    perform_check(&app, &state)
 }
 
 #[tauri::command]
 pub fn apply_update(
     app: AppHandle,
     state: tauri::State<UpdateState>,
-    config_state: tauri::State<crate::commands::config::ConfigState>,
 ) -> Result<(), String> {
     let info = state
         .available
@@ -92,28 +108,17 @@ pub fn apply_update(
         .clone()
         .ok_or("No update available")?;
 
-    *state.update_in_progress.lock().unwrap() = true;
-
-    {
-        let mut config = config_state.config.lock().unwrap();
-        config.dismissed_version = Some(info.version.clone());
-        let _ = crate::config::save_config(&config);
-    }
-
-    let url = info.download_url.clone();
     let app_handle = app.clone();
+    let version = info.version.clone();
+    let url = info.download_url.clone();
 
     std::thread::spawn(move || {
-        emit_status(&app_handle, UpdateStatus::Downloading);
-
-        match updater::download_and_install(&url, &info.version) {
-            Ok(()) => {
-                emit_status(&app_handle, UpdateStatus::Ready);
-            }
-            Err(e) => {
-                emit_status(&app_handle, UpdateStatus::Error(e.to_string()));
-            }
-        }
+        let state_ref = app_handle.state::<UpdateState>();
+        let info = UpdateInfo {
+            version,
+            download_url: url,
+        };
+        perform_install(&app_handle, &state_ref, &info);
     });
 
     Ok(())
