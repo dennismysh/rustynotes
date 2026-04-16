@@ -49,6 +49,7 @@ pub fn run() {
             config: Mutex::new(config::load_config()),
         })
         .manage(commands::update::UpdateState::new())
+        .manage(commands::window_mgmt::FileWindows::new())
         .invoke_handler(tauri::generate_handler![
             commands::fs::read_file,
             commands::fs::write_file,
@@ -67,6 +68,8 @@ pub fn run() {
             commands::update::get_update_status,
             commands::update::get_current_version,
             commands::update::dismiss_update,
+            commands::window_mgmt::open_file_in_new_window,
+            commands::window_mgmt::open_file_dialog,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
