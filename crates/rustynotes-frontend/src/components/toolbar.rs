@@ -100,19 +100,9 @@ pub fn Toolbar() -> impl IntoView {
     let file_tree = state.file_tree;
     let active_file_path = state.active_file_path;
     let active_file_content = state.active_file_content;
-    let is_dirty = state.is_dirty;
     let show_search = state.show_search;
     let save_status = state.save_status;
     let editor_mode = state.editor_mode;
-
-    // Derived: active filename (just the basename, e.g. "notes.md")
-    let active_filename = Memo::new(move |_| {
-        active_file_path
-            .get()
-            .as_deref()
-            .map(filename_from_path)
-            .map(String::from)
-    });
 
     // ---- handlers ----
 
@@ -316,46 +306,7 @@ pub fn Toolbar() -> impl IntoView {
                 </div>
             </Show>
             <div class="spacer" />
-            <Show when=move || active_filename.get().is_some() || active_file_path.get().is_none()>
-                <div class="toolbar-filename">
-                    {move || {
-                        let status = save_status.get();
-                        let dirty = is_dirty.get();
-                        match status {
-                            SaveStatus::Saving => {
-                                view! { <span class="save-indicator saving" aria-label="Saving">{"\u{21BB}"}</span> }.into_any()
-                            }
-                            SaveStatus::Saved => {
-                                view! { <span class="save-indicator saved" aria-label="Saved">{"\u{2713}"}</span> }.into_any()
-                            }
-                            SaveStatus::Error(ref msg) => {
-                                let title = msg.clone();
-                                view! { <span class="save-indicator error" title=title aria-label="Save error">{"\u{26A0}"}</span> }.into_any()
-                            }
-                            SaveStatus::Idle if dirty => {
-                                view! { <span class="dirty-indicator" aria-label="Unsaved changes" /> }.into_any()
-                            }
-                            _ => {
-                                view! { <span /> }.into_any()
-                            }
-                        }
-                    }}
-                    <span
-                        class="toolbar-filename-text"
-                        title=move || active_file_path.get().unwrap_or_default()
-                    >
-                        {move || {
-                            let name = active_filename.get().unwrap_or_default();
-                            let path = active_file_path.get();
-                            if path.is_none() && name.is_empty() {
-                                "Untitled".to_string()
-                            } else {
-                                name
-                            }
-                        }}
-                    </span>
-                </div>
-            </Show>
+            <crate::components::save_indicator::SaveIndicator />
             <div class="spacer" />
             <div class="mode-switcher">
                 <button
