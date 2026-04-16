@@ -8,6 +8,7 @@ use crate::components::navigation::{Breadcrumb, MillerColumns, Sidebar};
 use crate::components::onboarding::WelcomeEmptyState;
 use crate::components::preview::preview::Preview;
 use crate::components::settings::SettingsWindow;
+use crate::components::single_file::SingleFileView;
 use crate::components::titlebar::TitleBar;
 use crate::components::toolbar::Toolbar;
 use crate::save;
@@ -38,6 +39,7 @@ pub fn App() -> impl IntoView {
                 <Routes fallback=|| view! { <p>"Not found"</p> }>
                     <Route path=path!("") view=MainView />
                     <Route path=path!("/settings") view=SettingsView />
+                    <Route path=path!("/file") view=SingleFileView />
                 </Routes>
             </main>
         </Router>
