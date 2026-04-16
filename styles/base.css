@@ -995,6 +995,30 @@ body, #root, main {
   overflow: auto;
   min-height: 0;
 }
+.single-file-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  height: 100%;
+  text-align: center;
+  color: var(--fg-muted, #888);
+}
+.single-file-error h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--fg-default, #ddd);
+}
+.single-file-error button {
+  padding: 6px 16px;
+  background: var(--surface-1, #2a2a2a);
+  border: 1px solid var(--border-subtle, #3a3a3a);
+  color: var(--fg-default, #ddd);
+  border-radius: 4px;
+  cursor: pointer;
+}
 .slim-titlebar {
   display: flex;
   align-items: center;

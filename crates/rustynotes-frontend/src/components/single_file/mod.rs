@@ -32,11 +32,16 @@ pub fn SingleFileView() -> impl IntoView {
     // Signal to show the save/discard/cancel close-confirmation modal.
     let confirm_close_open = RwSignal::new(false);
 
+    // Signal to track file loading errors
+    let load_error = RwSignal::new(Option::<String>::None);
+
     // Load config on mount, apply theme, load the file, then show window
     {
         let state = state.clone();
+        let load_error = load_error.clone();
         Effect::new(move |_| {
             let state = state.clone();
+            let load_error = load_error.clone();
             leptos::task::spawn_local(async move {
                 match tauri_ipc::get_config().await {
                     Ok(config) => {
@@ -46,15 +51,47 @@ pub fn SingleFileView() -> impl IntoView {
                         state.app_config.set(Some(config));
                         // Load the file specified in the query param
                         if let Some(path) = read_path_param() {
-                            save::load_file(&state, path);
+                            match tauri_ipc::read_file(&path).await {
+                                Ok(content) => {
+                                    state.active_file_path.set(Some(path));
+                                    state.suppress_dirty.set(true);
+                                    state.active_file_content.set(content);
+                                    state.is_dirty.set(false);
+                                    let state2 = state.clone();
+                                    gloo_timers::callback::Timeout::new(100, move || {
+                                        state2.suppress_dirty.set(false);
+                                    }).forget();
+                                }
+                                Err(e) => {
+                                    load_error.set(Some(e));
+                                }
+                            }
+                        } else {
+                            load_error.set(Some("No file path provided.".to_string()));
                         }
                         tauri_ipc::show_current_window();
                     }
                     Err(e) => {
                         web_sys::console::error_1(&format!("get_config: {e}").into());
-                        // Still load file and show window even if config fails
+                        // Still try to load file and show window even if config fails
                         if let Some(path) = read_path_param() {
-                            save::load_file(&state, path);
+                            match tauri_ipc::read_file(&path).await {
+                                Ok(content) => {
+                                    state.active_file_path.set(Some(path));
+                                    state.suppress_dirty.set(true);
+                                    state.active_file_content.set(content);
+                                    state.is_dirty.set(false);
+                                    let state2 = state.clone();
+                                    gloo_timers::callback::Timeout::new(100, move || {
+                                        state2.suppress_dirty.set(false);
+                                    }).forget();
+                                }
+                                Err(e) => {
+                                    load_error.set(Some(e));
+                                }
+                            }
+                        } else {
+                            load_error.set(Some("No file path provided.".to_string()));
                         }
                         tauri_ipc::show_current_window();
                     }
@@ -124,7 +161,17 @@ pub fn SingleFileView() -> impl IntoView {
         <div class="single-file-shell">
             <SlimTitleBar />
             <div class="single-file-content">
-                <WysiwygEditor />
+                {move || if load_error.get().is_some() {
+                    view! {
+                        <div class="single-file-error">
+                            <h2>"Can't open this file"</h2>
+                            <p>{move || load_error.get().unwrap_or_default()}</p>
+                            <button on:click=move |_| tauri_ipc::close_current_window()>"Close"</button>
+                        </div>
+                    }.into_any()
+                } else {
+                    view! { <WysiwygEditor /> }.into_any()
+                }}
             </div>
             // Save-before-close prompt
             <Show when=move || confirm_close_open.get()>
