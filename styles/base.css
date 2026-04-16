@@ -1020,3 +1020,36 @@ body, #root, main {
   border-radius: 4px;
 }
 .slim-titlebar-overflow:hover { background: var(--surface-1, #2a2a2a); color: var(--fg-default, #ddd); }
+
+/* Overflow menu */
+.overflow-menu-wrapper { position: relative; -webkit-app-region: no-drag; }
+.overflow-menu {
+  position: absolute;
+  right: 0;
+  top: 32px;
+  min-width: 200px;
+  background: var(--surface-1, #2a2a2a);
+  border: 1px solid var(--border-subtle, #3a3a3a);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  padding: 4px;
+  z-index: 100;
+}
+.overflow-menu .overflow-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--fg-default, #ddd);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.overflow-menu .overflow-item:hover { background: var(--surface-2, #333); }
+.overflow-menu .overflow-sep {
+  height: 1px;
+  background: var(--border-subtle, #3a3a3a);
+  margin: 4px 0;
+}

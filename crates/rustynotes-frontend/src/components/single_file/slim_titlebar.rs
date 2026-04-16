@@ -2,6 +2,7 @@ use leptos::prelude::*;
 
 use crate::components::save_indicator::SaveIndicator;
 use crate::tauri_ipc;
+use super::overflow_menu::OverflowMenu;
 
 #[component]
 pub fn SlimTitleBar() -> impl IntoView {
@@ -35,9 +36,7 @@ pub fn SlimTitleBar() -> impl IntoView {
             </div>
             <SaveIndicator />
             <div class="spacer" />
-            <button class="slim-titlebar-overflow" aria-label="More" title="More">
-                {"\u{22EF}"}
-            </button>
+            <OverflowMenu />
         </div>
     }
 }
