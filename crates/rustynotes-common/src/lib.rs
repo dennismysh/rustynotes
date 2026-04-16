@@ -122,6 +122,8 @@ pub struct AppConfig {
     #[serde(default)]
     pub recent_folders: Vec<String>,
     #[serde(default)]
+    pub recent_files: Vec<String>,
+    #[serde(default)]
     pub save_mode: SaveMode,
     #[serde(default = "default_auto_save_delay_ms")]
     pub auto_save_delay_ms: u64,
@@ -215,6 +217,7 @@ impl Default for AppConfig {
             line_height: default_line_height(),
             rendering: RenderingToggles::default(),
             recent_folders: Vec::new(),
+            recent_files: Vec::new(),
             save_mode: SaveMode::default(),
             auto_save_delay_ms: default_auto_save_delay_ms(),
             auto_update: true,
@@ -432,5 +435,18 @@ mod tests {
         assert_eq!(config.line_height, 1.6);
         assert!(config.editor_font.is_empty());
         assert!(config.recent_folders.is_empty());
+    }
+
+    #[test]
+    fn test_recent_files_defaults_to_empty() {
+        let config: AppConfig = serde_json::from_str("{}").unwrap();
+        assert!(config.recent_files.is_empty());
+    }
+
+    #[test]
+    fn test_recent_files_roundtrip() {
+        let json = r#"{"recent_files":["/a/b.md","/c/d.md"]}"#;
+        let config: AppConfig = serde_json::from_str(json).unwrap();
+        assert_eq!(config.recent_files, vec!["/a/b.md", "/c/d.md"]);
     }
 }
