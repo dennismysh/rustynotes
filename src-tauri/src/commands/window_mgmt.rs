@@ -95,7 +95,7 @@ pub fn open_file_in_new_window_inner(
         .map(|s| s.to_string_lossy().into_owned())
         .unwrap_or_else(|| "Untitled".to_string());
 
-    WebviewWindowBuilder::new(app, &label, WebviewUrl::App(url.into()))
+    let window = WebviewWindowBuilder::new(app, &label, WebviewUrl::App(url.into()))
         .title(&filename)
         .inner_size(800.0, 650.0)
         .min_inner_size(400.0, 300.0)
@@ -103,6 +103,8 @@ pub fn open_file_in_new_window_inner(
         .visible(false)
         .build()
         .map_err(|e| e.to_string())?;
+
+    crate::attach_drop_handler(&window);
 
     file_windows.insert(canonical, label);
 

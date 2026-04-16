@@ -10,6 +10,30 @@ mod binary_watcher;
 use std::sync::Mutex;
 use tauri::Manager;
 
+pub fn attach_drop_handler(window: &tauri::WebviewWindow) {
+    let app_handle = window.app_handle().clone();
+    window.on_window_event(move |event| {
+        if let tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) = event {
+            let paths: Vec<String> = paths
+                .iter()
+                .take(10)
+                .map(|p| p.to_string_lossy().into_owned())
+                .collect();
+            let app_handle = app_handle.clone();
+            for path in paths {
+                if std::path::Path::new(&path).is_dir() {
+                    continue;
+                }
+                let file_windows = app_handle.state::<commands::window_mgmt::FileWindows>();
+                let config_state = app_handle.state::<commands::config::ConfigState>();
+                let _ = commands::window_mgmt::open_file_in_new_window_inner(
+                    &app_handle, path, &file_windows, &config_state,
+                );
+            }
+        }
+    });
+}
+
 struct WatcherState {
     _watcher: Mutex<Option<notify::RecommendedWatcher>>,
 }
@@ -106,6 +130,10 @@ pub fn run() {
                     let _ = commands::window_mgmt::open_file_in_new_window_inner(
                         &app_handle_args, path, &file_windows, &config_state,
                     );
+                }
+            } else {
+                if let Some(main) = app.get_webview_window("main") {
+                    attach_drop_handler(&main);
                 }
             }
 
