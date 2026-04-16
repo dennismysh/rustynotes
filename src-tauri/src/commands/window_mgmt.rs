@@ -126,6 +126,56 @@ pub fn open_file_in_new_window(
 }
 
 #[tauri::command]
+pub fn open_folder_in_window(app: AppHandle, path: String) -> Result<(), String> {
+    let canonical = canonicalize_or_same(&path);
+    let parent = canonical
+        .parent()
+        .ok_or_else(|| "File has no parent directory".to_string())?
+        .to_string_lossy()
+        .into_owned();
+    let filename = canonical
+        .file_name()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_default();
+
+    if let Some(main) = app.get_webview_window("main") {
+        let _ = main.set_focus();
+        let _ = app.emit(
+            "open-folder-with-file",
+            serde_json::json!({ "folder": parent, "file": filename }),
+        );
+        return Ok(());
+    }
+
+    // No main window — create one
+    WebviewWindowBuilder::new(&app, "main", WebviewUrl::App("/".into()))
+        .title("RustyNotes")
+        .inner_size(1100.0, 750.0)
+        .decorations(false)
+        .visible(false)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    // Update recent_folders so MainView auto-opens on mount
+    let config_state = app.state::<ConfigState>();
+    let mut config = config_state.config.lock().unwrap();
+    if !config.recent_folders.iter().any(|f| f == &parent) {
+        config.recent_folders.insert(0, parent.clone());
+        if config.recent_folders.len() > 10 {
+            config.recent_folders.truncate(10);
+        }
+        let _ = config_io::save_config(&config);
+    }
+
+    let _ = app.emit(
+        "open-folder-with-file",
+        serde_json::json!({ "folder": parent, "file": filename }),
+    );
+
+    Ok(())
+}
+
+#[tauri::command]
 pub fn open_file_dialog(app: AppHandle) -> Result<(), String> {
     use tauri_plugin_dialog::DialogExt;
 

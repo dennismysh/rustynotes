@@ -70,6 +70,7 @@ pub fn run() {
             commands::update::dismiss_update,
             commands::window_mgmt::open_file_in_new_window,
             commands::window_mgmt::open_file_dialog,
+            commands::window_mgmt::open_folder_in_window,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();

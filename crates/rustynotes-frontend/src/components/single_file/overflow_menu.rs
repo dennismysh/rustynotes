@@ -67,7 +67,12 @@ pub fn OverflowMenu() -> impl IntoView {
     let handle_open_in_folder = move |ev: web_sys::MouseEvent| {
         ev.stop_propagation();
         open.set(false);
-        web_sys::console::log_1(&"TODO: open_folder_in_window".into());
+        let path = active_file_path.get_untracked();
+        if let Some(p) = path {
+            leptos::task::spawn_local(async move {
+                let _ = tauri_ipc::open_folder_in_window(&p).await;
+            });
+        }
     };
 
     let handle_settings = move |ev: web_sys::MouseEvent| {

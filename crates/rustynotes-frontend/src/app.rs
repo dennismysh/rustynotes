@@ -93,6 +93,23 @@ fn MainView() -> impl IntoView {
         });
     }
 
+    // Listen for open-folder-with-file (emitted by open_folder_in_window command)
+    {
+        let state = state.clone();
+        tauri_ipc::listen_open_folder_with_file(move |folder, file| {
+            let state = state.clone();
+            leptos::task::spawn_local(async move {
+                save::open_folder(&state, folder).await;
+                if !file.is_empty() {
+                    let path = state.current_folder.get_untracked()
+                        .map(|f| format!("{f}/{file}"))
+                        .unwrap_or(file);
+                    save::load_file(&state, path);
+                }
+            });
+        });
+    }
+
     let has_folder = move || state.current_folder.get().is_some();
     let nav_mode = state.nav_mode;
     let editor_mode = state.editor_mode;

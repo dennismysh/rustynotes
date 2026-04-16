@@ -289,6 +289,15 @@ pub fn start_dragging() {
     call_current_window("startDragging");
 }
 
+pub async fn open_folder_in_window(path: &str) -> Result<(), String> {
+    #[derive(Serialize)]
+    struct Args<'a> {
+        path: &'a str,
+    }
+    tauri_invoke("open_folder_in_window", &Args { path }).await?;
+    Ok(())
+}
+
 // ---------------------------------------------------------------------------
 // Update commands
 // ---------------------------------------------------------------------------
@@ -341,6 +350,29 @@ pub fn listen_update_status(callback: impl Fn(String) + 'static) {
 // ---------------------------------------------------------------------------
 // Event listeners (app-lifetime — closures are `.forget()`-ed)
 // ---------------------------------------------------------------------------
+
+/// Listen to the `open-folder-with-file` Tauri event.
+/// Calls the callback with `(folder, file)` strings.
+pub fn listen_open_folder_with_file(callback: impl Fn(String, String) + 'static) {
+    use serde::Deserialize;
+    #[derive(Deserialize)]
+    struct Payload {
+        folder: String,
+        file: String,
+    }
+    listen_event("open-folder-with-file", move |payload: JsValue| {
+        if let Ok(inner) = reflect_get(&payload, "payload") {
+            match serde_wasm_bindgen::from_value::<Payload>(inner) {
+                Ok(p) => callback(p.folder, p.file),
+                Err(e) => {
+                    web_sys::console::error_1(
+                        &format!("open-folder-with-file deser: {e}").into(),
+                    );
+                }
+            }
+        }
+    });
+}
 
 /// Listen to the `config-changed` Tauri event. Deserialises the payload
 /// into `AppConfig` before calling the callback.
