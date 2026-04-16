@@ -29,6 +29,9 @@ pub fn SingleFileView() -> impl IntoView {
     // Initialize save handlers (keyboard shortcuts, auto-save timer, focus-loss)
     save::init_save_handlers(&state);
 
+    // Signal to show the save/discard/cancel close-confirmation modal.
+    let confirm_close_open = RwSignal::new(false);
+
     // Load config on mount, apply theme, load the file, then show window
     {
         let state = state.clone();
@@ -67,6 +70,18 @@ pub fn SingleFileView() -> impl IntoView {
             let theme = crate::theme::resolve_theme(&config.theme.active);
             crate::theme::apply_theme(&theme, Some(&config.theme.overrides));
             state.app_config.set(Some(config));
+        });
+    }
+
+    // Listen for confirm-close from the backend CloseRequested handler.
+    {
+        let state = state.clone();
+        tauri_ipc::listen_event("confirm-close", move |_| {
+            if state.is_dirty.get_untracked() {
+                confirm_close_open.set(true);
+            } else {
+                tauri_ipc::destroy_current_window();
+            }
         });
     }
 
@@ -111,6 +126,47 @@ pub fn SingleFileView() -> impl IntoView {
             <div class="single-file-content">
                 <WysiwygEditor />
             </div>
+            // Save-before-close prompt
+            <Show when=move || confirm_close_open.get()>
+                <div class="modal-overlay">
+                    <div class="modal-dialog">
+                        <p>"You have unsaved changes"</p>
+                        <div class="modal-actions">
+                            <button
+                                class="modal-btn primary"
+                                on:click={
+                                    let state = state.clone();
+                                    move |_| {
+                                        let state = state.clone();
+                                        confirm_close_open.set(false);
+                                        leptos::task::spawn_local(async move {
+                                            save::perform_save(&state).await;
+                                            tauri_ipc::destroy_current_window();
+                                        });
+                                    }
+                                }
+                            >
+                                "Save"
+                            </button>
+                            <button
+                                class="modal-btn"
+                                on:click=move |_| {
+                                    confirm_close_open.set(false);
+                                    tauri_ipc::destroy_current_window();
+                                }
+                            >
+                                "Discard"
+                            </button>
+                            <button
+                                class="modal-btn"
+                                on:click=move |_| confirm_close_open.set(false)
+                            >
+                                "Cancel"
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Show>
         </div>
     }
 }

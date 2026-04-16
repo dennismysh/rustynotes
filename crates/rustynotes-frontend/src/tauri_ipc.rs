@@ -277,6 +277,12 @@ pub fn close_current_window() {
     call_current_window("close");
 }
 
+/// Destroy (force-close) the current webview window without re-triggering
+/// `CloseRequested`. Use this after the user confirms save/discard.
+pub fn destroy_current_window() {
+    call_current_window("destroy");
+}
+
 pub fn minimize_current_window() {
     call_current_window("minimize");
 }
@@ -418,7 +424,7 @@ pub fn listen_config_changed(callback: impl Fn(AppConfig) + 'static) {
 
 /// Low-level helper: call `__TAURI__.event.listen(event_name, handler)`.
 /// The `Closure` is `.forget()`-ed since these are app-lifetime listeners.
-fn listen_event(event_name: &str, handler: impl Fn(JsValue) + 'static) {
+pub fn listen_event(event_name: &str, handler: impl Fn(JsValue) + 'static) {
     let run = || -> Result<(), String> {
         let window = web_sys::window().ok_or("no global `window`")?;
         let tauri = reflect_get(&window, "__TAURI__")?;

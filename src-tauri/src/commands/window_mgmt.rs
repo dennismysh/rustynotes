@@ -104,7 +104,51 @@ pub fn open_file_in_new_window_inner(
         .build()
         .map_err(|e| e.to_string())?;
 
-    crate::attach_drop_handler(&window);
+    // Combined drop + close-requested + destroyed handler for this window.
+    {
+        let app_for_events = app.clone();
+        let label_for_events = label.clone();
+        window.on_window_event(move |event| {
+            match event {
+                tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) => {
+                    let paths: Vec<String> = paths
+                        .iter()
+                        .take(10)
+                        .map(|p| p.to_string_lossy().into_owned())
+                        .collect();
+                    let app_handle = app_for_events.clone();
+                    for path in paths {
+                        if std::path::Path::new(&path).is_dir() {
+                            continue;
+                        }
+                        let file_windows =
+                            app_handle.state::<crate::commands::window_mgmt::FileWindows>();
+                        let config_state =
+                            app_handle.state::<crate::commands::config::ConfigState>();
+                        let _ = crate::commands::window_mgmt::open_file_in_new_window_inner(
+                            &app_handle,
+                            path,
+                            &file_windows,
+                            &config_state,
+                        );
+                    }
+                }
+                tauri::WindowEvent::CloseRequested { api, .. } => {
+                    api.prevent_close();
+                    let _ = app_for_events.emit_to(
+                        tauri::EventTarget::webview_window(label_for_events.clone()),
+                        "confirm-close",
+                        (),
+                    );
+                }
+                tauri::WindowEvent::Destroyed => {
+                    let fw = app_for_events.state::<FileWindows>();
+                    fw.remove_by_label(&label_for_events);
+                }
+                _ => {}
+            }
+        });
+    }
 
     file_windows.insert(canonical, label);
 
