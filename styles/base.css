@@ -1053,3 +1053,24 @@ body, #root, main {
   background: var(--border-subtle, #3a3a3a);
   margin: 4px 0;
 }
+.empty-state-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.empty-state-cta.secondary {
+  background: transparent;
+  border: 1px solid var(--border-subtle, #3a3a3a);
+  color: var(--fg-default, #ddd);
+}
+.empty-state-cta.secondary:hover {
+  background: var(--surface-1, #2a2a2a);
+}
+.recent-subheading {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 10px 0 4px;
+}

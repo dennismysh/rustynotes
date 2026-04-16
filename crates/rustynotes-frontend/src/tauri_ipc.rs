@@ -298,6 +298,23 @@ pub async fn open_folder_in_window(path: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Open the native file picker dialog. The backend handles the result
+/// internally (spawns a new file window). Fire-and-forget from the frontend.
+pub async fn open_file_dialog() -> Result<(), String> {
+    tauri_invoke_no_args("open_file_dialog").await?;
+    Ok(())
+}
+
+/// Open a specific file path in a new window directly.
+pub async fn open_file_in_new_window(path: &str) -> Result<(), String> {
+    #[derive(Serialize)]
+    struct Args<'a> {
+        path: &'a str,
+    }
+    tauri_invoke("open_file_in_new_window", &Args { path }).await?;
+    Ok(())
+}
+
 // ---------------------------------------------------------------------------
 // Update commands
 // ---------------------------------------------------------------------------
