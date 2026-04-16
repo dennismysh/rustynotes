@@ -62,7 +62,7 @@ impl FileWindows {
     }
 }
 
-fn open_file_in_new_window_inner(
+pub fn open_file_in_new_window_inner(
     app: &AppHandle,
     path: String,
     file_windows: &FileWindows,

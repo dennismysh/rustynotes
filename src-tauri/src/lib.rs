@@ -31,6 +31,19 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            for arg in argv.iter().skip(1) {
+                if arg.starts_with('-') {
+                    continue;
+                }
+                let path = arg.clone();
+                let file_windows = app.state::<commands::window_mgmt::FileWindows>();
+                let config_state = app.state::<commands::config::ConfigState>();
+                let _ = commands::window_mgmt::open_file_in_new_window_inner(
+                    app, path, &file_windows, &config_state,
+                );
+            }
+        }))
         .plugin(
             tauri_plugin_window_state::Builder::new()
                 .with_state_flags(
@@ -73,6 +86,29 @@ pub fn run() {
             commands::window_mgmt::open_folder_in_window,
         ])
         .setup(|app| {
+            // Cold-launch CLI argument handling
+            let startup_paths: Vec<String> = std::env::args()
+                .skip(1)
+                .filter(|a| !a.starts_with('-'))
+                .collect();
+
+            let has_file_arg = !startup_paths.is_empty();
+
+            if has_file_arg {
+                // Close the auto-created main window to prevent welcome flash
+                if let Some(main) = app.get_webview_window("main") {
+                    let _ = main.close();
+                }
+                let app_handle_args = app.handle().clone();
+                for path in startup_paths {
+                    let file_windows = app_handle_args.state::<commands::window_mgmt::FileWindows>();
+                    let config_state = app_handle_args.state::<commands::config::ConfigState>();
+                    let _ = commands::window_mgmt::open_file_in_new_window_inner(
+                        &app_handle_args, path, &file_windows, &config_state,
+                    );
+                }
+            }
+
             let app_handle = app.handle().clone();
 
             // Background update check on startup + periodic (every 6 hours)
@@ -130,6 +166,24 @@ pub fn run() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            #[cfg(any(target_os = "macos", target_os = "ios"))]
+            if let tauri::RunEvent::Opened { urls } = &event {
+                for url in urls {
+                    if url.scheme() == "file" {
+                        if let Ok(path_buf) = url.to_file_path() {
+                            let path = path_buf.to_string_lossy().into_owned();
+                            let file_windows = app.state::<commands::window_mgmt::FileWindows>();
+                            let config_state = app.state::<commands::config::ConfigState>();
+                            let _ = commands::window_mgmt::open_file_in_new_window_inner(
+                                app, path, &file_windows, &config_state,
+                            );
+                        }
+                    }
+                }
+            }
+            let _ = event;
+        });
 }
