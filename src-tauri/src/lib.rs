@@ -3,6 +3,7 @@ mod config;
 mod export;
 mod fs_ops;
 mod markdown_parser;
+mod menu;
 mod watcher;
 mod updater;
 mod binary_watcher;
@@ -191,6 +192,15 @@ pub fn run() {
                     }
                 });
             }
+
+            // Native menu
+            let app_menu = menu::build_menu(app.handle())?;
+            app.set_menu(app_menu)?;
+
+            let app_handle_menu = app.handle().clone();
+            app.on_menu_event(move |_app, event| {
+                menu::handle_menu_event(&app_handle_menu, event.id().0.as_str());
+            });
 
             Ok(())
         })

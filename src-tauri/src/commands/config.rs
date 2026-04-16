@@ -20,6 +20,9 @@ pub fn save_config_cmd(
     config::save_config(&config_data)?;
     *state.config.lock().unwrap() = config_data.clone();
     let _ = app.emit("config-changed", config_data);
+    if let Ok(new_menu) = crate::menu::build_menu(&app) {
+        let _ = app.set_menu(new_menu);
+    }
     Ok(())
 }
 
