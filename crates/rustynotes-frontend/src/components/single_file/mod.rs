@@ -70,6 +70,41 @@ pub fn SingleFileView() -> impl IntoView {
         });
     }
 
+    // menu:export — single-file windows also respond to the native Export menu item
+    {
+        let active_file_path = state.active_file_path;
+        let active_file_content = state.active_file_content;
+        tauri_ipc::listen_menu_event("menu:export", move || {
+            leptos::task::spawn_local(async move {
+                let file_path_val = active_file_path.get_untracked();
+                let Some(ref path) = file_path_val else { return };
+                let content = active_file_content.get_untracked();
+
+                let file_name = path.rsplit('/').next().unwrap_or(path);
+                let stem = match file_name.rfind('.') {
+                    Some(pos) => &file_name[..pos],
+                    None => file_name,
+                };
+                let default_name = format!("{stem}.html");
+
+                let save_path = match tauri_ipc::save_file_dialog(&default_name).await {
+                    Ok(Some(p)) => p,
+                    Ok(None) => return,
+                    Err(e) => {
+                        web_sys::console::error_1(
+                            &format!("save_file_dialog failed: {e}").into(),
+                        );
+                        return;
+                    }
+                };
+
+                if let Err(e) = tauri_ipc::export_file(&content, &save_path, "html", true).await {
+                    web_sys::console::error_1(&format!("export_file failed: {e}").into());
+                }
+            });
+        });
+    }
+
     view! {
         <div class="single-file-shell">
             <SlimTitleBar />

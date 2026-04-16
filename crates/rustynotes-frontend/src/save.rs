@@ -61,8 +61,30 @@ pub async fn perform_save(state: &AppState) {
 /// Initialize all save-related event handlers. Call once at app mount.
 pub fn init_save_handlers(state: &AppState) {
     init_keyboard_shortcuts(state);
+    init_menu_listeners(state);
     init_auto_save(state);
     init_focus_loss_save(state);
+}
+
+fn init_menu_listeners(state: &AppState) {
+    // menu:save → perform_save
+    let state_save = state.clone();
+    tauri_ipc::listen_menu_event("menu:save", move || {
+        let state = state_save.clone();
+        leptos::task::spawn_local(async move {
+            perform_save(&state).await;
+        });
+    });
+
+    // menu:new-file → clear editor state (same logic as the old Cmd+N handler)
+    let state_new = state.clone();
+    tauri_ipc::listen_menu_event("menu:new-file", move || {
+        state_new.active_file_path.set(None);
+        state_new.active_file_content.set(String::new());
+        state_new.is_dirty.set(false);
+        state_new.save_status.set(SaveStatus::Idle);
+        state_new.rendered_html.set(String::new());
+    });
 }
 
 fn is_mac() -> bool {
@@ -84,21 +106,6 @@ fn init_keyboard_shortcuts(state: &AppState) {
         }
 
         match ke.key().as_str() {
-            "s" => {
-                ke.prevent_default();
-                let state = state.clone();
-                leptos::task::spawn_local(async move {
-                    perform_save(&state).await;
-                });
-            }
-            "n" => {
-                ke.prevent_default();
-                state.active_file_path.set(None);
-                state.active_file_content.set(String::new());
-                state.is_dirty.set(false);
-                state.save_status.set(SaveStatus::Idle);
-                state.rendered_html.set(String::new());
-            }
             "1" => {
                 ke.prevent_default();
                 state.editor_mode.set(EditorMode::Source);

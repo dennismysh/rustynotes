@@ -374,6 +374,14 @@ pub fn listen_open_folder_with_file(callback: impl Fn(String, String) + 'static)
     });
 }
 
+/// Listen to a payload-less Tauri menu event (e.g. `menu:save`).
+/// The closure is called with no arguments each time the event fires.
+pub fn listen_menu_event(event_name: &str, cb: impl Fn() + 'static) {
+    listen_event(event_name, move |_payload: JsValue| {
+        cb();
+    });
+}
+
 /// Listen to the `config-changed` Tauri event. Deserialises the payload
 /// into `AppConfig` before calling the callback.
 pub fn listen_config_changed(callback: impl Fn(AppConfig) + 'static) {
