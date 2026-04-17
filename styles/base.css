@@ -1028,8 +1028,8 @@ body, #root, main {
   flex: 0 0 auto;
   -webkit-app-region: drag;
   user-select: none;
-  background: var(--surface-0, #1e1e1e);
-  border-bottom: 1px solid var(--border-subtle, #2a2a2a);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
 }
 .slim-titlebar .titlebar-buttons { -webkit-app-region: no-drag; }
 .slim-titlebar .spacer { flex: 1; }
