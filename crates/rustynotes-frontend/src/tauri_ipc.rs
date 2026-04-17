@@ -278,9 +278,12 @@ pub fn close_current_window() {
 }
 
 /// Destroy (force-close) the current webview window without re-triggering
-/// `CloseRequested`. Use this after the user confirms save/discard.
+/// `CloseRequested`. Uses the webviewWindow API (not the window API)
+/// because `destroy()` only exists on `WebviewWindow`.
 pub fn destroy_current_window() {
-    call_current_window("destroy");
+    let _ = js_sys::eval(
+        "window.__TAURI__.webviewWindow.getCurrent().destroy()",
+    );
 }
 
 pub fn minimize_current_window() {
