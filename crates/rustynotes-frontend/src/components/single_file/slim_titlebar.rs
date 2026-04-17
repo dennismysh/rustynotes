@@ -1,14 +1,22 @@
 use leptos::prelude::*;
 
 use crate::components::save_indicator::SaveIndicator;
+use crate::state::use_app_state;
 use crate::tauri_ipc;
 use super::overflow_menu::OverflowMenu;
 
 #[component]
-pub fn SlimTitleBar() -> impl IntoView {
+pub fn SlimTitleBar(
+    confirm_close_open: RwSignal<bool>,
+) -> impl IntoView {
+    let state = use_app_state();
     let handle_close = move |ev: web_sys::MouseEvent| {
         ev.stop_propagation();
-        tauri_ipc::close_current_window();
+        if state.is_dirty.get_untracked() {
+            confirm_close_open.set(true);
+        } else {
+            tauri_ipc::destroy_current_window();
+        }
     };
     let handle_minimize = move |ev: web_sys::MouseEvent| {
         ev.stop_propagation();

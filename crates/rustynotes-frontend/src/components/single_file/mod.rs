@@ -159,7 +159,7 @@ pub fn SingleFileView() -> impl IntoView {
 
     view! {
         <div class="single-file-shell">
-            <SlimTitleBar />
+            <SlimTitleBar confirm_close_open=confirm_close_open />
             <div class="single-file-content">
                 {move || if load_error.get().is_some() {
                     view! {
