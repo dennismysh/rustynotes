@@ -133,14 +133,6 @@ pub fn open_file_in_new_window_inner(
                         );
                     }
                 }
-                tauri::WindowEvent::CloseRequested { api, .. } => {
-                    api.prevent_close();
-                    let _ = app_for_events.emit_to(
-                        tauri::EventTarget::webview_window(label_for_events.clone()),
-                        "confirm-close",
-                        (),
-                    );
-                }
                 tauri::WindowEvent::Destroyed => {
                     let fw = app_for_events.state::<FileWindows>();
                     fw.remove_by_label(&label_for_events);

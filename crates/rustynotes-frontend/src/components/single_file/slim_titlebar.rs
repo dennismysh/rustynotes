@@ -15,7 +15,7 @@ pub fn SlimTitleBar(
         if state.is_dirty.get_untracked() {
             confirm_close_open.set(true);
         } else {
-            tauri_ipc::destroy_current_window();
+            tauri_ipc::close_current_window();
         }
     };
     let handle_minimize = move |ev: web_sys::MouseEvent| {

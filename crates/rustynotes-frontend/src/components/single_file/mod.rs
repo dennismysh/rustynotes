@@ -110,17 +110,6 @@ pub fn SingleFileView() -> impl IntoView {
         });
     }
 
-    // Listen for confirm-close from the backend CloseRequested handler.
-    {
-        let state = state.clone();
-        tauri_ipc::listen_event("confirm-close", move |_| {
-            if state.is_dirty.get_untracked() {
-                confirm_close_open.set(true);
-            } else {
-                tauri_ipc::destroy_current_window();
-            }
-        });
-    }
 
     // menu:export — single-file windows also respond to the native Export menu item
     {
@@ -188,7 +177,7 @@ pub fn SingleFileView() -> impl IntoView {
                                         confirm_close_open.set(false);
                                         leptos::task::spawn_local(async move {
                                             save::perform_save(&state).await;
-                                            tauri_ipc::destroy_current_window();
+                                            tauri_ipc::close_current_window();
                                         });
                                     }
                                 }
@@ -199,7 +188,7 @@ pub fn SingleFileView() -> impl IntoView {
                                 class="modal-btn"
                                 on:click=move |_| {
                                     confirm_close_open.set(false);
-                                    tauri_ipc::destroy_current_window();
+                                    tauri_ipc::close_current_window();
                                 }
                             >
                                 "Discard"
