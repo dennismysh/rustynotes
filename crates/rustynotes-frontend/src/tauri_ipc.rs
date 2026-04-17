@@ -277,6 +277,15 @@ pub fn close_current_window() {
     call_current_window("close");
 }
 
+/// Destroy (force-close) the current webview window without re-triggering
+/// `CloseRequested`. Uses the webviewWindow API (not the window API)
+/// because `destroy()` only exists on `WebviewWindow`.
+pub fn destroy_current_window() {
+    let _ = js_sys::eval(
+        "window.__TAURI__.webviewWindow.getCurrent().destroy()",
+    );
+}
+
 pub fn minimize_current_window() {
     call_current_window("minimize");
 }
@@ -287,6 +296,32 @@ pub fn toggle_maximize_current_window() {
 
 pub fn start_dragging() {
     call_current_window("startDragging");
+}
+
+pub async fn open_folder_in_window(path: &str) -> Result<(), String> {
+    #[derive(Serialize)]
+    struct Args<'a> {
+        path: &'a str,
+    }
+    tauri_invoke("open_folder_in_window", &Args { path }).await?;
+    Ok(())
+}
+
+/// Open the native file picker dialog. The backend handles the result
+/// internally (spawns a new file window). Fire-and-forget from the frontend.
+pub async fn open_file_dialog() -> Result<(), String> {
+    tauri_invoke_no_args("open_file_dialog").await?;
+    Ok(())
+}
+
+/// Open a specific file path in a new window directly.
+pub async fn open_file_in_new_window(path: &str) -> Result<(), String> {
+    #[derive(Serialize)]
+    struct Args<'a> {
+        path: &'a str,
+    }
+    tauri_invoke("open_file_in_new_window", &Args { path }).await?;
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -342,6 +377,37 @@ pub fn listen_update_status(callback: impl Fn(String) + 'static) {
 // Event listeners (app-lifetime — closures are `.forget()`-ed)
 // ---------------------------------------------------------------------------
 
+/// Listen to the `open-folder-with-file` Tauri event.
+/// Calls the callback with `(folder, file)` strings.
+pub fn listen_open_folder_with_file(callback: impl Fn(String, String) + 'static) {
+    use serde::Deserialize;
+    #[derive(Deserialize)]
+    struct Payload {
+        folder: String,
+        file: String,
+    }
+    listen_event("open-folder-with-file", move |payload: JsValue| {
+        if let Ok(inner) = reflect_get(&payload, "payload") {
+            match serde_wasm_bindgen::from_value::<Payload>(inner) {
+                Ok(p) => callback(p.folder, p.file),
+                Err(e) => {
+                    web_sys::console::error_1(
+                        &format!("open-folder-with-file deser: {e}").into(),
+                    );
+                }
+            }
+        }
+    });
+}
+
+/// Listen to a payload-less Tauri menu event (e.g. `menu:save`).
+/// The closure is called with no arguments each time the event fires.
+pub fn listen_menu_event(event_name: &str, cb: impl Fn() + 'static) {
+    listen_event(event_name, move |_payload: JsValue| {
+        cb();
+    });
+}
+
 /// Listen to the `config-changed` Tauri event. Deserialises the payload
 /// into `AppConfig` before calling the callback.
 pub fn listen_config_changed(callback: impl Fn(AppConfig) + 'static) {
@@ -361,7 +427,7 @@ pub fn listen_config_changed(callback: impl Fn(AppConfig) + 'static) {
 
 /// Low-level helper: call `__TAURI__.event.listen(event_name, handler)`.
 /// The `Closure` is `.forget()`-ed since these are app-lifetime listeners.
-fn listen_event(event_name: &str, handler: impl Fn(JsValue) + 'static) {
+pub fn listen_event(event_name: &str, handler: impl Fn(JsValue) + 'static) {
     let run = || -> Result<(), String> {
         let window = web_sys::window().ok_or("no global `window`")?;
         let tauri = reflect_get(&window, "__TAURI__")?;

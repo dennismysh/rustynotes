@@ -3,6 +3,7 @@ pub mod export;
 pub mod fs;
 pub mod markdown;
 pub mod update;
+pub mod window_mgmt;
 
 use serde::Serialize;
 

@@ -3,12 +3,37 @@ mod config;
 mod export;
 mod fs_ops;
 mod markdown_parser;
+mod menu;
 mod watcher;
 mod updater;
 mod binary_watcher;
 
 use std::sync::Mutex;
 use tauri::Manager;
+
+pub fn attach_drop_handler(window: &tauri::WebviewWindow) {
+    let app_handle = window.app_handle().clone();
+    window.on_window_event(move |event| {
+        if let tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) = event {
+            let paths: Vec<String> = paths
+                .iter()
+                .take(10)
+                .map(|p| p.to_string_lossy().into_owned())
+                .collect();
+            let app_handle = app_handle.clone();
+            for path in paths {
+                if std::path::Path::new(&path).is_dir() {
+                    continue;
+                }
+                let file_windows = app_handle.state::<commands::window_mgmt::FileWindows>();
+                let config_state = app_handle.state::<commands::config::ConfigState>();
+                let _ = commands::window_mgmt::open_file_in_new_window_inner(
+                    &app_handle, path, &file_windows, &config_state,
+                );
+            }
+        }
+    });
+}
 
 struct WatcherState {
     _watcher: Mutex<Option<notify::RecommendedWatcher>>,
@@ -31,6 +56,19 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            for arg in argv.iter().skip(1) {
+                if arg.starts_with('-') {
+                    continue;
+                }
+                let path = arg.clone();
+                let file_windows = app.state::<commands::window_mgmt::FileWindows>();
+                let config_state = app.state::<commands::config::ConfigState>();
+                let _ = commands::window_mgmt::open_file_in_new_window_inner(
+                    app, path, &file_windows, &config_state,
+                );
+            }
+        }))
         .plugin(
             tauri_plugin_window_state::Builder::new()
                 .with_state_flags(
@@ -49,6 +87,7 @@ pub fn run() {
             config: Mutex::new(config::load_config()),
         })
         .manage(commands::update::UpdateState::new())
+        .manage(commands::window_mgmt::FileWindows::new())
         .invoke_handler(tauri::generate_handler![
             commands::fs::read_file,
             commands::fs::write_file,
@@ -67,8 +106,38 @@ pub fn run() {
             commands::update::get_update_status,
             commands::update::get_current_version,
             commands::update::dismiss_update,
+            commands::window_mgmt::open_file_in_new_window,
+            commands::window_mgmt::open_file_dialog,
+            commands::window_mgmt::open_folder_in_window,
         ])
         .setup(|app| {
+            // Cold-launch CLI argument handling
+            let startup_paths: Vec<String> = std::env::args()
+                .skip(1)
+                .filter(|a| !a.starts_with('-'))
+                .collect();
+
+            let has_file_arg = !startup_paths.is_empty();
+
+            if has_file_arg {
+                // Close the auto-created main window to prevent welcome flash
+                if let Some(main) = app.get_webview_window("main") {
+                    let _ = main.close();
+                }
+                let app_handle_args = app.handle().clone();
+                for path in startup_paths {
+                    let file_windows = app_handle_args.state::<commands::window_mgmt::FileWindows>();
+                    let config_state = app_handle_args.state::<commands::config::ConfigState>();
+                    let _ = commands::window_mgmt::open_file_in_new_window_inner(
+                        &app_handle_args, path, &file_windows, &config_state,
+                    );
+                }
+            } else {
+                if let Some(main) = app.get_webview_window("main") {
+                    attach_drop_handler(&main);
+                }
+            }
+
             let app_handle = app.handle().clone();
 
             // Background update check on startup + periodic (every 6 hours)
@@ -124,8 +193,35 @@ pub fn run() {
                 });
             }
 
+            // Native menu
+            let app_menu = menu::build_menu(app.handle())?;
+            app.set_menu(app_menu)?;
+
+            let app_handle_menu = app.handle().clone();
+            app.on_menu_event(move |_app, event| {
+                menu::handle_menu_event(&app_handle_menu, event.id().0.as_str());
+            });
+
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            #[cfg(any(target_os = "macos", target_os = "ios"))]
+            if let tauri::RunEvent::Opened { urls } = &event {
+                for url in urls {
+                    if url.scheme() == "file" {
+                        if let Ok(path_buf) = url.to_file_path() {
+                            let path = path_buf.to_string_lossy().into_owned();
+                            let file_windows = app.state::<commands::window_mgmt::FileWindows>();
+                            let config_state = app.state::<commands::config::ConfigState>();
+                            let _ = commands::window_mgmt::open_file_in_new_window_inner(
+                                app, path, &file_windows, &config_state,
+                            );
+                        }
+                    }
+                }
+            }
+            let _ = event;
+        });
 }

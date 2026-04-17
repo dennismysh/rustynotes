@@ -8,7 +8,13 @@ pub struct ConfigState {
 
 #[tauri::command]
 pub fn get_config(state: tauri::State<ConfigState>) -> AppConfig {
-    state.config.lock().unwrap().clone()
+    let mut config = state.config.lock().unwrap();
+    let changed = crate::commands::window_mgmt::prune_missing(&mut config.recent_files)
+        | crate::commands::window_mgmt::prune_missing(&mut config.recent_folders);
+    if changed {
+        let _ = crate::config::save_config(&config);
+    }
+    config.clone()
 }
 
 #[tauri::command]
@@ -20,6 +26,9 @@ pub fn save_config_cmd(
     config::save_config(&config_data)?;
     *state.config.lock().unwrap() = config_data.clone();
     let _ = app.emit("config-changed", config_data);
+    if let Ok(new_menu) = crate::menu::build_menu(&app) {
+        let _ = app.set_menu(new_menu);
+    }
     Ok(())
 }
 

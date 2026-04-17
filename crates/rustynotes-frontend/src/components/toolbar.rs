@@ -72,6 +72,68 @@ pub fn Toolbar() -> impl IntoView {
         }
     });
 
+    // menu:open-folder
+    {
+        let state = state.clone();
+        tauri_ipc::listen_menu_event("menu:open-folder", move || {
+            let state = state.clone();
+            leptos::task::spawn_local(async move {
+                if let Ok(Some(folder)) = tauri_ipc::open_folder_dialog().await {
+                    crate::save::open_folder(&state, folder).await;
+                }
+            });
+        });
+    }
+
+    // menu:export — mirrors the handle_export closure below
+    {
+        let active_file_path = state.active_file_path;
+        let active_file_content = state.active_file_content;
+        tauri_ipc::listen_menu_event("menu:export", move || {
+            leptos::task::spawn_local(async move {
+                let file_path_val = active_file_path.get_untracked();
+                let Some(ref path) = file_path_val else { return };
+                let content = active_file_content.get_untracked();
+
+                let file_name = filename_from_path(path);
+                let stem = stem_from_filename(file_name);
+                let default_name = format!("{stem}.html");
+
+                let save_path = match tauri_ipc::save_file_dialog(&default_name).await {
+                    Ok(Some(p)) => p,
+                    Ok(None) => return,
+                    Err(e) => {
+                        web_sys::console::error_1(
+                            &format!("save_file_dialog failed: {e}").into(),
+                        );
+                        export_status.set(Some("Could not export".to_string()));
+                        leptos::task::spawn_local(async move {
+                            sleep_ms(2000).await;
+                            export_status.set(None);
+                        });
+                        return;
+                    }
+                };
+
+                match tauri_ipc::export_file(&content, &save_path, "html", true).await {
+                    Ok(()) => {
+                        let saved_name = filename_from_path(&save_path);
+                        export_status.set(Some(format!("Saved {saved_name}")));
+                    }
+                    Err(e) => {
+                        web_sys::console::error_1(&format!("Export failed: {e}").into());
+                        export_status.set(Some("Could not export".to_string()));
+                    }
+                }
+
+                leptos::task::spawn_local(async move {
+                    sleep_ms(2000).await;
+                    export_status.set(None);
+                });
+            });
+        });
+    }
+
     let handle_update_click = move |ev: web_sys::MouseEvent| {
         ev.stop_propagation();
         leptos::task::spawn_local(async move {
@@ -100,19 +162,9 @@ pub fn Toolbar() -> impl IntoView {
     let file_tree = state.file_tree;
     let active_file_path = state.active_file_path;
     let active_file_content = state.active_file_content;
-    let is_dirty = state.is_dirty;
     let show_search = state.show_search;
     let save_status = state.save_status;
     let editor_mode = state.editor_mode;
-
-    // Derived: active filename (just the basename, e.g. "notes.md")
-    let active_filename = Memo::new(move |_| {
-        active_file_path
-            .get()
-            .as_deref()
-            .map(filename_from_path)
-            .map(String::from)
-    });
 
     // ---- handlers ----
 
@@ -316,46 +368,7 @@ pub fn Toolbar() -> impl IntoView {
                 </div>
             </Show>
             <div class="spacer" />
-            <Show when=move || active_filename.get().is_some() || active_file_path.get().is_none()>
-                <div class="toolbar-filename">
-                    {move || {
-                        let status = save_status.get();
-                        let dirty = is_dirty.get();
-                        match status {
-                            SaveStatus::Saving => {
-                                view! { <span class="save-indicator saving" aria-label="Saving">{"\u{21BB}"}</span> }.into_any()
-                            }
-                            SaveStatus::Saved => {
-                                view! { <span class="save-indicator saved" aria-label="Saved">{"\u{2713}"}</span> }.into_any()
-                            }
-                            SaveStatus::Error(ref msg) => {
-                                let title = msg.clone();
-                                view! { <span class="save-indicator error" title=title aria-label="Save error">{"\u{26A0}"}</span> }.into_any()
-                            }
-                            SaveStatus::Idle if dirty => {
-                                view! { <span class="dirty-indicator" aria-label="Unsaved changes" /> }.into_any()
-                            }
-                            _ => {
-                                view! { <span /> }.into_any()
-                            }
-                        }
-                    }}
-                    <span
-                        class="toolbar-filename-text"
-                        title=move || active_file_path.get().unwrap_or_default()
-                    >
-                        {move || {
-                            let name = active_filename.get().unwrap_or_default();
-                            let path = active_file_path.get();
-                            if path.is_none() && name.is_empty() {
-                                "Untitled".to_string()
-                            } else {
-                                name
-                            }
-                        }}
-                    </span>
-                </div>
-            </Show>
+            <crate::components::save_indicator::SaveIndicator />
             <div class="spacer" />
             <div class="mode-switcher">
                 <button
