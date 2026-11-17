@@ -95,6 +95,8 @@ styles/                 CSS
 
 js/
   bridge-src.js         JS bridge source (CodeMirror, TipTap, KaTeX, Mermaid)
+  editor-extensions.js  TipTap extension set (lossless markdown round-trip)
+  roundtrip.test.mjs    Round-trip tests for the above (`pnpm test`)
   bridge.bundle.js      Bundled output (esbuild)
   bundle-vendor.sh      Build script for JS bundle
 ```

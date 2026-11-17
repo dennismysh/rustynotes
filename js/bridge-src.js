@@ -7,10 +7,15 @@ import { keymap } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { searchKeymap } from '@codemirror/search';
 import { Editor } from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
-import TaskList from '@tiptap/extension-task-list';
-import TaskItem from '@tiptap/extension-task-item';
-import { Markdown } from '@tiptap/markdown';
+import { buildExtensions, tuneMarkdownManager } from './editor-extensions.js';
+
+// TipTap pads the document with an empty trailing paragraph after blocks such
+// as tables and code, which serializes as stray blank lines. Files end with
+// exactly one newline.
+function tiptapMarkdown(editor) {
+  const md = editor.getMarkdown().replace(/\s+$/, '');
+  return md ? md + '\n' : '';
+}
 
 let katexModule = null;
 let mermaidModule = null;
@@ -49,31 +54,25 @@ window.RustyNotesBridge = {
   },
 
   mountTipTap(element, content, options, onChange) {
-    const exts = [
-      StarterKit.configure({ codeBlock: false }),
-      Markdown,
-    ];
-    if (options.taskLists !== false) {
-      exts.push(TaskList, TaskItem.configure({ nested: true }));
-    }
     const editor = new Editor({
       element,
-      extensions: exts,
+      extensions: buildExtensions(options),
       content,
       contentType: 'markdown',
-      onUpdate: ({ editor }) => onChange(editor.getMarkdown()),
+      onUpdate: ({ editor }) => onChange(tiptapMarkdown(editor)),
     });
+    tuneMarkdownManager(editor.markdown);
     return { editor };
   },
 
   updateTipTap(handle, content) {
-    if (handle.editor.getMarkdown() !== content) {
+    if (tiptapMarkdown(handle.editor) !== content) {
       handle.editor.commands.setContent(content, { contentType: 'markdown' });
     }
   },
 
   getTipTapMarkdown(handle) {
-    return handle.editor.getMarkdown();
+    return tiptapMarkdown(handle.editor);
   },
 
   focusTipTap(handle) {

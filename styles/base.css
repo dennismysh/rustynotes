@@ -673,6 +673,42 @@ body, #root, main {
   color: var(--text-primary);
 }
 
+/* Raw markdown the WYSIWYG editor keeps verbatim instead of rendering
+   (front matter, math, footnotes, HTML). Quiet, so it reads as source. */
+.wysiwyg-editor .tiptap pre.raw-block {
+  position: relative;
+  padding-top: 28px;
+  border-style: dashed;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  white-space: pre-wrap;
+}
+.wysiwyg-editor .tiptap pre.raw-block::before {
+  content: attr(data-raw-block);
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  pointer-events: none;
+  user-select: none;
+}
+.wysiwyg-editor .tiptap .raw-inline {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--text-secondary);
+}
+/* Backslash escapes are ordinary prose; only the source form is kept. */
+.wysiwyg-editor .tiptap .raw-inline[data-raw-inline="escape"] {
+  font: inherit;
+  color: inherit;
+}
+
 /* WYSIWYG code block syntax highlighting (lowlight) */
 .wysiwyg-editor .tiptap pre code .hljs-keyword { color: var(--accent); }
 .wysiwyg-editor .tiptap pre code .hljs-string { color: var(--alert-tip); }
