@@ -167,6 +167,32 @@ fn verify_installed_version(expected_version: &str) -> Result<(), UpdateError> {
     Ok(())
 }
 
+/// Largest update download accepted. ureq caps `read_to_vec` at 10 MB by
+/// default, below the ~16 MB DMG, which made every update fail; the limit
+/// is set explicitly and the body is streamed to disk instead of buffered.
+const MAX_DOWNLOAD_BYTES: u64 = 200 * 1024 * 1024;
+
+/// Stream `url` into `dest`.
+fn download_to_file(url: &str, dest: &Path) -> Result<(), UpdateError> {
+    let response = ureq::get(url)
+        .call()
+        .map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
+
+    let mut reader = response
+        .into_body()
+        .into_with_config()
+        .limit(MAX_DOWNLOAD_BYTES)
+        .reader();
+
+    let mut file =
+        fs::File::create(dest).map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
+    std::io::copy(&mut reader, &mut file)
+        .map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
+    file.flush()
+        .map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
+    Ok(())
+}
+
 /// Download a DMG, mount it, replace the app bundle, verify, unmount, and clean up.
 pub fn download_and_install(url: &str, expected_version: &str) -> Result<(), UpdateError> {
     let temp_dir = Path::new(TEMP_DIR);
@@ -176,20 +202,7 @@ pub fn download_and_install(url: &str, expected_version: &str) -> Result<(), Upd
     let _ = fs::remove_dir_all(temp_dir);
     fs::create_dir_all(temp_dir).map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
 
-    let response = ureq::get(url)
-        .call()
-        .map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
-
-    let bytes = response
-        .into_body()
-        .read_to_vec()
-        .map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
-
-    let mut file = fs::File::create(&dmg_path)
-        .map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
-    file.write_all(&bytes)
-        .map_err(|e| UpdateError::DownloadFailed(e.to_string()))?;
-    drop(file);
+    download_to_file(url, &dmg_path)?;
 
     let mount_status = Command::new("hdiutil")
         .args([
@@ -312,5 +325,24 @@ mod tests {
     fn test_verify_installed_version_parses_plist_output() {
         let result = verify_installed_version("99.99.99");
         assert!(result.is_err());
+    }
+}
+
+#[cfg(test)]
+mod download_tests {
+    use super::*;
+
+    /// Downloads the real v0.4.1 DMG (~16 MB) to prove bodies over ureq's
+    /// 10 MB default limit get through. Needs the network, so it is ignored
+    /// by default: `cargo test -p rustynotes -- --ignored download`.
+    #[test]
+    #[ignore]
+    fn download_larger_than_ten_megabytes() {
+        let url = "https://github.com/dennismysh/rustynotes/releases/download/v0.4.1/RustyNotes-v0.4.1-macos-universal.dmg";
+        let dir = tempfile::tempdir().unwrap();
+        let dest = dir.path().join("update.dmg");
+        download_to_file(url, &dest).expect("download should succeed");
+        let size = fs::metadata(&dest).unwrap().len();
+        assert!(size > 10 * 1024 * 1024, "only {size} bytes written");
     }
 }
