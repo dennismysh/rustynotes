@@ -230,8 +230,17 @@ pub fn Toolbar() -> impl IntoView {
         });
     };
 
+    let nav_mode = state.nav_mode;
     let handle_search_toggle = move |_| {
-        show_search.update(|v| *v = !*v);
+        let open = !show_search.get_untracked();
+        if open {
+            // The filter box lives in the sidebar navigation style.
+            nav_mode.set(rustynotes_common::NavMode::Sidebar);
+        }
+        show_search.set(open);
+        if open {
+            crate::save::focus_filter_input();
+        }
     };
 
     let handle_settings = move |_| {
@@ -409,7 +418,8 @@ pub fn Toolbar() -> impl IntoView {
                 class="toolbar-icon-btn"
                 class:active=move || show_search.get()
                 on:click=handle_search_toggle
-                title=format!("Search files ({search_shortcut})")
+                title=format!("Filter files ({search_shortcut})")
+                aria-label="Filter files"
             >
                 "\u{2315}"
             </button>

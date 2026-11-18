@@ -2,7 +2,7 @@
 //! focus-loss handler, and file-switch guard.
 
 use leptos::prelude::*;
-use rustynotes_common::{EditorMode, SaveMode};
+use rustynotes_common::{EditorMode, NavMode, SaveMode};
 use wasm_bindgen::prelude::*;
 use web_sys::KeyboardEvent;
 
@@ -94,6 +94,20 @@ fn is_mac() -> bool {
         .unwrap_or(false)
 }
 
+/// Focus the sidebar's file filter once it has rendered.
+pub fn focus_filter_input() {
+    gloo_timers::callback::Timeout::new(0, || {
+        let input = web_sys::window()
+            .and_then(|w| w.document())
+            .and_then(|d| d.get_element_by_id("sidebar-filter"))
+            .and_then(|el| el.dyn_into::<web_sys::HtmlElement>().ok());
+        if let Some(input) = input {
+            let _ = input.focus();
+        }
+    })
+    .forget();
+}
+
 fn init_keyboard_shortcuts(state: &AppState) {
     let state = state.clone();
     let mac = is_mac();
@@ -105,7 +119,23 @@ fn init_keyboard_shortcuts(state: &AppState) {
             return;
         }
 
-        match ke.key().as_str() {
+        // Shift+digit: navigation style. Match on the physical key, since
+        // Shift changes `key()` ("!" instead of "1").
+        if ke.shift_key() {
+            let nav = match ke.code().as_str() {
+                "Digit1" => Some(NavMode::Sidebar),
+                "Digit2" => Some(NavMode::Miller),
+                "Digit3" => Some(NavMode::Breadcrumb),
+                _ => None,
+            };
+            if let Some(nav) = nav {
+                ke.prevent_default();
+                state.nav_mode.set(nav);
+            }
+            return;
+        }
+
+        match ke.key().to_lowercase().as_str() {
             "1" => {
                 ke.prevent_default();
                 state.editor_mode.set(EditorMode::Source);
@@ -121,6 +151,14 @@ fn init_keyboard_shortcuts(state: &AppState) {
             "4" => {
                 ke.prevent_default();
                 state.editor_mode.set(EditorMode::Preview);
+            }
+            // Filter files: only meaningful with a folder open, and the
+            // filter box lives in the sidebar navigation style.
+            "k" if state.current_folder.get_untracked().is_some() => {
+                ke.prevent_default();
+                state.nav_mode.set(NavMode::Sidebar);
+                state.show_search.set(true);
+                focus_filter_input();
             }
             _ => {}
         }

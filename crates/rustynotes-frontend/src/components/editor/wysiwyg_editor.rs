@@ -28,6 +28,11 @@ pub fn WysiwygEditor() -> impl IntoView {
     Effect::new(move |_| {
         if let Some(el) = container.get() {
             let cb = Closure::wrap(Box::new(move |new_content: String| {
+                // TipTap fires updates that don't change the markdown (e.g.
+                // focusing an empty document adds a trailing paragraph).
+                if new_content == content_signal.get_untracked() {
+                    return;
+                }
                 content_signal.set(new_content.clone());
                 if !suppress_dirty.get_untracked() {
                     dirty_signal.set(true);

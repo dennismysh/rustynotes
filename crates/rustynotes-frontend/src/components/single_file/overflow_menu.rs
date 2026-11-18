@@ -61,7 +61,13 @@ pub fn OverflowMenu() -> impl IntoView {
     let handle_source_mode = move |ev: web_sys::MouseEvent| {
         ev.stop_propagation();
         open.set(false);
-        editor_mode.set(EditorMode::Source);
+        editor_mode.update(|m| {
+            *m = if *m == EditorMode::Source {
+                EditorMode::Wysiwyg
+            } else {
+                EditorMode::Source
+            };
+        });
     };
 
     let handle_open_in_folder = move |ev: web_sys::MouseEvent| {
@@ -127,7 +133,11 @@ pub fn OverflowMenu() -> impl IntoView {
             <Show when=move || open.get()>
                 <div class="overflow-menu" on:click=|ev: web_sys::MouseEvent| ev.stop_propagation()>
                     <button class="overflow-item" on:click=handle_source_mode>
-                        "Switch to Source mode"
+                        {move || if editor_mode.get() == EditorMode::Source {
+                            "Switch to Rich mode"
+                        } else {
+                            "Switch to Source mode"
+                        }}
                     </button>
                     <button class="overflow-item" on:click=handle_open_in_folder>
                         "Open in folder window"
