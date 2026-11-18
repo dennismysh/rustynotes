@@ -263,12 +263,20 @@ pub fn Sidebar() -> impl IntoView {
             <Show when=move || state.show_search.get()>
                 <div class="sidebar-search">
                     <input
+                        id="sidebar-filter"
                         type="text"
-                        placeholder="Filter files..."
+                        placeholder="Filter files by name"
+                        aria-label="Filter files by name"
                         prop:value=move || state.search_query.get()
                         on:input=move |ev| {
                             let val = event_target_value(&ev);
                             state.search_query.set(val);
+                        }
+                        on:keydown=move |ev: web_sys::KeyboardEvent| {
+                            if ev.key() == "Escape" {
+                                state.search_query.set(String::new());
+                                state.show_search.set(false);
+                            }
                         }
                         autofocus=true
                     />

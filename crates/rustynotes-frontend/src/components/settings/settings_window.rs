@@ -17,7 +17,8 @@ fn categories() -> Vec<SettingsCategory> {
         SettingsCategory { id: "appearance", label: "Appearance", icon: "\u{1F3A8}" },
         SettingsCategory { id: "editor",     label: "Editor",     icon: "\u{270F}\u{FE0F}" },
         SettingsCategory { id: "saving",     label: "Saving",     icon: "\u{1F4BE}" },
-        SettingsCategory { id: "preview",    label: "Preview",    icon: "\u{1F441}" },
+        // "Preview" (math, diagrams, front matter, line numbers, wikilinks)
+        // is hidden until the preview actually reads those toggles.
         SettingsCategory { id: "advanced",   label: "Advanced",   icon: "\u{1F50C}" },
         SettingsCategory { id: "updates",    label: "Updates",    icon: "\u{1F504}" },
     ]

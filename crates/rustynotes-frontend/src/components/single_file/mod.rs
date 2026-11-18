@@ -3,7 +3,10 @@ pub mod slim_titlebar;
 
 use leptos::prelude::*;
 
-use crate::components::editor::WysiwygEditor;
+use rustynotes_common::EditorMode;
+
+use crate::components::editor::{SourceEditor, SplitPane, WysiwygEditor};
+use crate::components::preview::preview::Preview;
 use crate::save;
 use crate::state::use_app_state;
 use crate::tauri_ipc;
@@ -146,6 +149,8 @@ pub fn SingleFileView() -> impl IntoView {
         });
     }
 
+    let editor_mode = state.editor_mode;
+
     view! {
         <div class="single-file-shell">
             <SlimTitleBar confirm_close_open=confirm_close_open />
@@ -159,7 +164,12 @@ pub fn SingleFileView() -> impl IntoView {
                         </div>
                     }.into_any()
                 } else {
-                    view! { <WysiwygEditor /> }.into_any()
+                    match editor_mode.get() {
+                        EditorMode::Source => view! { <SourceEditor /> }.into_any(),
+                        EditorMode::Wysiwyg => view! { <WysiwygEditor /> }.into_any(),
+                        EditorMode::Split => view! { <SplitPane /> }.into_any(),
+                        EditorMode::Preview => view! { <Preview /> }.into_any(),
+                    }
                 }}
             </div>
             // Save-before-close prompt

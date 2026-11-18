@@ -235,8 +235,12 @@ pub fn WelcomeEmptyState() -> impl IntoView {
 
     // Modifier string needs to be owned for the closures below.
     let mod_k = format!("{modifier}K");
-    let mod_e = format!("{modifier}E");
-    let mod_123 = format!("{modifier}1/2/3");
+    let mod_modes = format!("{modifier}1\u{2013}4");
+    let mod_nav = if is_mac() {
+        "\u{21E7}\u{2318}1\u{2013}3".to_string()
+    } else {
+        "Ctrl+Shift+1\u{2013}3".to_string()
+    };
     let mod_comma = format!("{modifier},");
 
     let state_for_recent = state.clone();
@@ -254,7 +258,7 @@ pub fn WelcomeEmptyState() -> impl IntoView {
             </Show>
 
             <p class="hint">
-                "WYSIWYG editing, LaTeX math, Mermaid diagrams, and syntax-highlighted code."
+                "Rich-text editing, live preview, and syntax-highlighted code."
             </p>
 
             <div class="empty-state-actions">
@@ -279,15 +283,15 @@ pub fn WelcomeEmptyState() -> impl IntoView {
             <div class="empty-state-shortcuts">
                 <div class="shortcut-row">
                     <kbd>{mod_k.clone()}</kbd>
-                    <span>"Search files"</span>
+                    <span>"Filter files"</span>
                 </div>
                 <div class="shortcut-row">
-                    <kbd>{mod_e.clone()}</kbd>
-                    <span>"Cycle editor mode"</span>
+                    <kbd>{mod_modes.clone()}</kbd>
+                    <span>"Editor mode"</span>
                 </div>
                 <div class="shortcut-row">
-                    <kbd>{mod_123.clone()}</kbd>
-                    <span>"Switch navigation"</span>
+                    <kbd>{mod_nav.clone()}</kbd>
+                    <span>"Navigation style"</span>
                 </div>
                 <Show when=move || is_first_run.get()>
                     <div class="shortcut-row">
